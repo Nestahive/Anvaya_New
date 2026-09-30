@@ -21,7 +21,7 @@ class Settings(BaseSettings):
         "image/jpg",
     ]
     
-    # CORS
+    # CORS--
     CORS_ORIGINS: List[str] = ["*"]
 
     model_config = SettingsConfigDict(

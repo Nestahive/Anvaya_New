@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../widgets/aegis_logo.dart';
+import '../widgets/anvaya_logo.dart';
+import '../widgets/swipe_slider.dart';
 import 'login_screen.dart';
 
-/// Splash / Get Started screen matching reference Image 1.
+/// Splash / Get Started screen matching Figma design.
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
-  void _onGetStartedPressed(BuildContext context) {
+  void _onGetStartedCompleted(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const LoginScreen(),
@@ -21,22 +22,23 @@ class SplashScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Prominent upper-right neon green radial glow matching Image 1
+          // Large, soft neon green radial glow positioned at the top-right fading into black
           Positioned(
-            top: -120,
-            right: -60,
+            top: -160,
+            right: -80,
             child: Container(
-              width: 440,
-              height: 440,
+              width: 520,
+              height: 520,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.primaryGreen.withValues(alpha: 0.35),
-                    AppColors.deepGreenGlow.withValues(alpha: 0.18),
+                    AppColors.primaryGreen.withValues(alpha: 0.38),
+                    AppColors.primaryGreen.withValues(alpha: 0.16),
+                    AppColors.deepGreenGlow.withValues(alpha: 0.05),
                     Colors.transparent,
                   ],
-                  stops: const [0.0, 0.45, 1.0],
+                  stops: const [0.0, 0.35, 0.65, 1.0],
                 ),
               ),
             ),
@@ -45,110 +47,32 @@ class SplashScreen extends StatelessWidget {
           // Main content
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Column(
                 children: [
-                  const Spacer(flex: 3),
+                  const Spacer(flex: 2),
 
-                  // Center Branding Wordmark matching Image 1
+                  // Official Anvaya Wordmark placed in the upper area matching Figma
                   const Center(
-                    child: AegisWordmark(
-                      height: 72,
-                      color: Color(0xFFE2E8F0),
+                    child: AnvayaWordmark(
+                      height: 80,
                     ),
                   ),
 
-                  const Spacer(flex: 4),
+                  const Spacer(flex: 5),
 
-                  // Bottom Pill-shaped "Get Started" Button
-                  _buildGetStartedButton(context),
+                  // Bottom Swipe-to-Confirm "Get Started" Slider
+                  SwipeToConfirmSlider(
+                    text: 'Get Started',
+                    onConfirmed: () => _onGetStartedCompleted(context),
+                  ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                 ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGetStartedButton(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 68,
-      decoration: BoxDecoration(
-        color: const Color(0xFF141715),
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(
-          color: const Color(0xFF222724),
-          width: 1.0,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(40),
-          onTap: () => _onGetStartedPressed(context),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: [
-                // Left Neon Green Circle with Black Arrow and soft glow
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primaryGreen.withValues(alpha: 0.45),
-                        blurRadius: 18,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Colors.black,
-                      size: 24,
-                    ),
-                  ),
-                ),
-
-                // Center Text: "Get Started"
-                const Expanded(
-                  child: Center(
-                    child: Text(
-                      'Get Started',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Right Triple Chevron: >>>
-                const Padding(
-                  padding: EdgeInsets.only(right: 18.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.chevron_right_rounded, color: Color(0x5594A3B8), size: 18),
-                      Icon(Icons.chevron_right_rounded, color: Color(0x9994A3B8), size: 18),
-                      Icon(Icons.chevron_right_rounded, color: Color(0xFFFFFFFF), size: 18),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -81,12 +81,14 @@ class AppSocialButton extends StatelessWidget {
   final String label;
   final Widget icon;
   final VoidCallback onPressed;
+  final bool isLoading;
 
   const AppSocialButton({
     super.key,
     required this.label,
     required this.icon,
     required this.onPressed,
+    this.isLoading = false,
   });
 
   @override
@@ -103,14 +105,26 @@ class AppSocialButton extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: onPressed,
+            onTap: isLoading ? null : onPressed,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  icon,
-                  const SizedBox(width: 8),
+                  if (isLoading) ...[
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ] else ...[
+                    icon,
+                    const SizedBox(width: 8),
+                  ],
                   Flexible(
                     child: Text(
                       label,

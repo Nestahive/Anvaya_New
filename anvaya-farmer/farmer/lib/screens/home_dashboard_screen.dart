@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../widgets/aegis_logo.dart';
+import '../widgets/anvaya_logo.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/metric_card.dart';
@@ -20,7 +20,7 @@ class FarmerHomeScreen extends StatefulWidget {
 }
 
 class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
-  int _currentNavIndex = 1; // Default to History matching Image 5 reference
+  int _currentNavIndex = 4; // Farmer Profile screen
 
   void _navigateToPlaceholder({
     required String title,
@@ -207,11 +207,11 @@ class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with Aegis Logo & Live Node
+            // Header with Anvaya Logo & Live Node
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const AegisLogoMark(size: 28),
+                const AnvayaLogoMark(size: 28),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/aegis_logo.dart';
+import '../widgets/anvaya_logo.dart';
 import 'login_screen.dart';
 
-/// Screen 4: Farmer Profile & Account Settings matching reference Image 4.
+/// Screen 4: Farmer Profile & Account Settings matching reference design.
 class FarmerProfileScreen extends StatelessWidget {
   final VoidCallback? onBack;
 
@@ -29,18 +30,18 @@ class FarmerProfileScreen extends StatelessWidget {
         physics: const ClampingScrollPhysics(),
         child: Column(
           children: [
-            // Top Hero Banner with curved bottom cutout and floating avatar
+            // Top Hero Banner with botanical foliage background, curved green arch and floating avatar
             _buildHeroHeader(context),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // Farmer Name & ID
             const Text(
-              'Mayur Shelke',
+              'Pratiksha Patil',
               style: TextStyle(
                 color: AppColors.primaryGreen,
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
                 letterSpacing: -0.3,
               ),
             ),
@@ -48,10 +49,10 @@ class FarmerProfileScreen extends StatelessWidget {
             const Text(
               'ID: AEGIS-7729-X',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: Colors.white,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                letterSpacing: 0.5,
+                letterSpacing: 0.6,
               ),
             ),
 
@@ -75,13 +76,16 @@ class FarmerProfileScreen extends StatelessWidget {
 
                   // Score Box with neon underline
                   Container(
-                    width: 140,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    width: 135,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 16,
+                    ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF101311),
+                      color: const Color(0xFF0C100D),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: const Color(0xFF1E2621),
+                        color: const Color(0xFF1B231D),
                         width: 1.0,
                       ),
                       boxShadow: [
@@ -97,21 +101,23 @@ class FarmerProfileScreen extends StatelessWidget {
                           '980',
                           style: TextStyle(
                             color: AppColors.primaryGreen,
-                            fontSize: 44,
+                            fontSize: 46,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Container(
-                          width: 60,
-                          height: 3,
+                          width: 64,
+                          height: 3.5,
                           decoration: BoxDecoration(
                             color: AppColors.primaryGreen,
                             borderRadius: BorderRadius.circular(2),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primaryGreen.withValues(alpha: 0.6),
+                                color: AppColors.primaryGreen.withValues(
+                                  alpha: 0.7,
+                                ),
                                 blurRadius: 6,
                               ),
                             ],
@@ -133,9 +139,9 @@ class FarmerProfileScreen extends StatelessWidget {
                 children: [
                   _buildMetricCard(value: '14', label: 'TOTAL\nBATCHES'),
                   const SizedBox(width: 10),
-                  _buildMetricCard(value: '96%', label: 'VERIFIED\nRATIO'),
+                  _buildMetricCard(value: '96%', label: 'VERIFIED RATIO'),
                   const SizedBox(width: 10),
-                  _buildMetricCard(value: '2.4k', label: 'EARNING\n '),
+                  _buildMetricCard(value: '2.4k', label: 'EARNING'),
                 ],
               ),
             ),
@@ -152,7 +158,7 @@ class FarmerProfileScreen extends StatelessWidget {
                     'ACCOUNT SETTINGS',
                     style: TextStyle(
                       color: AppColors.textMuted,
-                      fontSize: 11,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.8,
                     ),
@@ -162,29 +168,37 @@ class FarmerProfileScreen extends StatelessWidget {
                   // Settings Card
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF131614),
+                      color: const Color(0xFF0C100D),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: const Color(0xFF222924),
+                        color: const Color(0xFF1B231D),
                         width: 1.0,
                       ),
                     ),
                     child: Column(
                       children: [
                         _buildSettingRow(
-                          icon: Icons.account_balance_wallet_rounded,
+                          icon: Icons.account_balance_wallet_outlined,
                           title: 'Wallet Address',
                           subtitle: '0x71C...4e21',
                         ),
-                        const Divider(color: Color(0xFF222724), height: 1, indent: 64),
+                        const Divider(
+                          color: Color(0xFF19201B),
+                          height: 1,
+                          indent: 64,
+                        ),
                         _buildSettingRow(
                           icon: Icons.agriculture_rounded,
                           title: 'Farm Details',
                           subtitle: 'Green Valley Estate, Kenya',
                         ),
-                        const Divider(color: Color(0xFF222724), height: 1, indent: 64),
+                        const Divider(
+                          color: Color(0xFF19201B),
+                          height: 1,
+                          indent: 64,
+                        ),
                         _buildSettingRow(
-                          icon: Icons.headset_mic_rounded,
+                          icon: Icons.help_outline_rounded,
                           title: 'Support',
                           subtitle: 'Help Center & 24/7 Agent',
                         ),
@@ -210,11 +224,11 @@ class FarmerProfileScreen extends StatelessWidget {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Logout from AEGIS',
+                    'Logout from ANVAYA',
                     style: TextStyle(
                       color: Color(0xFFEF4444),
                       fontSize: 14.5,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -229,6 +243,7 @@ class FarmerProfileScreen extends StatelessWidget {
   }
 
   Widget _buildHeroHeader(BuildContext context) {
+    const double headerHeight = 220;
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.bottomCenter,
@@ -237,28 +252,50 @@ class FarmerProfileScreen extends StatelessWidget {
         ClipPath(
           clipper: _HeaderCurveClipper(),
           child: Container(
-            height: 230,
+            height: headerHeight,
             width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF0F3820),
-                  Color(0xFF092213),
-                  Color(0xFF05140B),
-                ],
-              ),
-            ),
+            decoration: const BoxDecoration(color: Color(0xFF0A180E)),
             child: Stack(
+              fit: StackFit.expand,
               children: [
-                // Top-left Aegis Logo
+                Image.asset(
+                  'assets/images/foliage_header.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF0F3820),
+                          Color(0xFF092213),
+                          Color(0xFF05140B),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Subtle gradient overlay for depth
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.15),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.35),
+                      ],
+                    ),
+                  ),
+                ),
+                // Top-left Anvaya Logo
                 Positioned(
-                  top: 50,
+                  top: MediaQuery.of(context).padding.top + 8,
                   left: 20,
-                  child: AegisLogoMark(
-                    size: 32,
-                    color: Colors.white.withValues(alpha: 0.9),
+                  child: const AnvayaLogoMark(
+                    size: 34,
+                    color: Color(0xFFE2E8F0),
                   ),
                 ),
               ],
@@ -266,37 +303,47 @@ class FarmerProfileScreen extends StatelessWidget {
           ),
         ),
 
+        // Glowing neon green arch curve border along the bottom edge
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: headerHeight,
+          child: CustomPaint(painter: _HeaderCurveBorderPainter()),
+        ),
+
         // Floating Farmer Avatar with green border & VERIFIED FARMER pill
         Positioned(
-          bottom: -45,
+          bottom: -50,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 110,
-                height: 110,
+                width: 116,
+                height: 116,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primaryGreen,
-                    width: 2.2,
-                  ),
+                  border: Border.all(color: AppColors.primaryGreen, width: 2.2),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.4),
-                      blurRadius: 16,
+                      color: AppColors.primaryGreen.withValues(alpha: 0.45),
+                      blurRadius: 18,
                       spreadRadius: 2,
                     ),
                   ],
                 ),
                 child: ClipOval(
-                  child: Container(
-                    color: const Color(0xFF1E3A28),
-                    child: const Center(
-                      child: Icon(
-                        Icons.person_rounded,
-                        color: Colors.white,
-                        size: 56,
+                  child: Image.asset(
+                    'assets/images/farmer_avatar.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: const Color(0xFF1E3A28),
+                      child: const Center(
+                        child: Icon(
+                          Icons.person_rounded,
+                          color: Colors.white,
+                          size: 56,
+                        ),
                       ),
                     ),
                   ),
@@ -306,39 +353,39 @@ class FarmerProfileScreen extends StatelessWidget {
               const SizedBox(height: 6),
 
               // VERIFIED FARMER Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.5),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.check_circle_rounded,
-                      color: Colors.black,
-                      size: 13,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'VERIFIED FARMER',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // Container(
+              //   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              //   decoration: BoxDecoration(
+              //     color: AppColors.primaryGreen,
+              //     borderRadius: BorderRadius.circular(16),
+              //     boxShadow: [
+              //       BoxShadow(
+              //         color: AppColors.primaryGreen.withValues(alpha: 0.55),
+              //         blurRadius: 12,
+              //       ),
+              //     ],
+              //   ),
+              //   child: const Row(
+              //     mainAxisSize: MainAxisSize.min,
+              //     children: [
+              //       Icon(
+              //         Icons.check_circle_rounded,
+              //         color: Colors.black,
+              //         size: 13,
+              //       ),
+              //       SizedBox(width: 4),
+              //       Text(
+              //         'VERIFIED FARMER',
+              //         style: TextStyle(
+              //           color: Colors.black,
+              //           fontSize: 9.5,
+              //           fontWeight: FontWeight.w900,
+              //           letterSpacing: 0.5,
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -352,12 +399,9 @@ class FarmerProfileScreen extends StatelessWidget {
         height: 94,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF101311),
+          color: const Color(0xFF0C100D),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFF1E2621),
-            width: 1.0,
-          ),
+          border: Border.all(color: const Color(0xFF1B231D), width: 1.0),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -366,7 +410,7 @@ class FarmerProfileScreen extends StatelessWidget {
               value,
               style: const TextStyle(
                 color: AppColors.primaryGreen,
-                fontSize: 22,
+                fontSize: 24,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -402,13 +446,9 @@ class FarmerProfileScreen extends StatelessWidget {
             height: 40,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFF1B231E),
+              color: Color(0xFF141C16),
             ),
-            child: Icon(
-              icon,
-              color: AppColors.primaryGreen,
-              size: 20,
-            ),
+            child: Icon(icon, color: AppColors.primaryGreen, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -420,7 +460,7 @@ class FarmerProfileScreen extends StatelessWidget {
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -428,7 +468,7 @@ class FarmerProfileScreen extends StatelessWidget {
                   subtitle,
                   style: const TextStyle(
                     color: AppColors.textMuted,
-                    fontSize: 12,
+                    fontSize: 12.5,
                   ),
                 ),
               ],
@@ -436,8 +476,8 @@ class FarmerProfileScreen extends StatelessWidget {
           ),
           const Icon(
             Icons.chevron_right_rounded,
-            color: AppColors.textMuted,
-            size: 18,
+            color: Color(0xFF4C5850),
+            size: 20,
           ),
         ],
       ),
@@ -449,12 +489,12 @@ class _HeaderCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.lineTo(0, size.height - 40);
+    path.lineTo(0, size.height - 45);
     path.quadraticBezierTo(
       size.width / 2,
       size.height + 25,
       size.width,
-      size.height - 40,
+      size.height - 45,
     );
     path.lineTo(size.width, 0);
     path.close();
@@ -463,4 +503,37 @@ class _HeaderCurveClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _HeaderCurveBorderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokePaint = Paint()
+      ..color = AppColors.primaryGreen
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..isAntiAlias = true;
+
+    final glowPaint = Paint()
+      ..color = AppColors.primaryGreen.withValues(alpha: 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5)
+      ..isAntiAlias = true;
+
+    final path = Path();
+    path.moveTo(0, size.height - 45);
+    path.quadraticBezierTo(
+      size.width / 2,
+      size.height + 25,
+      size.width,
+      size.height - 45,
+    );
+
+    canvas.drawPath(path, glowPaint);
+    canvas.drawPath(path, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

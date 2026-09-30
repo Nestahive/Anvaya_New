@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/aegis_logo.dart';
+import '../widgets/anvaya_logo.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_text_field.dart';
 import 'home_dashboard_screen.dart';
@@ -136,11 +136,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 children: [
                   const SizedBox(height: 16),
 
-                  // Centered Aegis Logo Mark matching Image 3
+                  // Centered Anvaya Logo Mark
                   const Center(
-                    child: AegisLogoMark(
+                    child: AnvayaLogoMark(
                       size: 42,
-                      color: Color(0xFFE2E8F0),
                     ),
                   ),
 

@@ -2,13 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/aegis_logo.dart';
+import '../widgets/anvaya_logo.dart';
+import '../widgets/brand_icons.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_text_field.dart';
 import 'home_dashboard_screen.dart';
 import 'sign_up_screen.dart';
 
-/// Screen 1: Login Screen matching reference Image 2.
+/// Screen 1: Login Screen matching reference design.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -24,12 +25,52 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _identifierError;
   String? _passwordError;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
 
   @override
   void dispose() {
     _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _handleGoogleSignIn() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      final credential = await _authService.signInWithGoogle();
+      if (!mounted) return;
+      if (credential != null) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const FarmerHomeScreen(),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AuthService.parseAuthException(e)),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google Sign-In failed: $e'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleLoading = false);
+      }
+    }
   }
 
   void _handleLogin() async {
@@ -95,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Upper-right subtle neon green glow matching Image 2
+          // Upper-right subtle neon green glow
           Positioned(
             top: -100,
             right: -80,
@@ -145,11 +186,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const SizedBox(height: 16),
 
-                  // Centered Aegis Logo Mark matching Image 2
+                  // Centered Anvaya Logo Mark
                   const Center(
-                    child: AegisLogoMark(
+                    child: AnvayaLogoMark(
                       size: 42,
-                      color: Color(0xFFE2E8F0),
                     ),
                   ),
 
@@ -173,14 +213,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       AppSocialButton(
                         label: 'Google',
-                        icon: _buildGoogleIcon(),
-                        onPressed: () {},
+                        icon: const GoogleLogo(size: 24),
+                        isLoading: _isGoogleLoading,
+                        onPressed: _handleGoogleSignIn,
                       ),
                       const SizedBox(width: 14),
                       AppSocialButton(
                         label: 'Metamask',
-                        icon: _buildMetaMaskIcon(),
-                        onPressed: () {},
+                        icon: const MetaMaskLogo(size: 24),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('MetaMask Web3 wallet connection coming soon'),
+                              backgroundColor: const Color(0xFF1E201F),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -215,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Form: Email/ID
                   AppTextField(
                     label: 'Email/ID',
-                    hintText: 'eg. janedoe@gmail.com / AEGIS-7723',
+                    hintText: 'eg. janedoe@gmail.com / ANVAYA-7723',
                     controller: _identifierController,
                     errorText: _identifierError,
                     keyboardType: TextInputType.emailAddress,
@@ -231,7 +281,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Form: Password
                   AppTextField(
                     label: 'Password',
-                    hintText: 'eg. janedoe@gmail.com',
+                    hintText: 'Enter your password',
                     controller: _passwordController,
                     isPassword: true,
                     errorText: _passwordError,
@@ -270,7 +320,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               TextSpan(text: "Don't have an account? "),
                               TextSpan(
-                                text: 'Sing up',
+                                text: 'Sign up',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
@@ -290,35 +340,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildGoogleIcon() {
-    return Container(
-      width: 18,
-      height: 18,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-      ),
-      child: const Center(
-        child: Text(
-          'G',
-          style: TextStyle(
-            color: Color(0xFF4285F4),
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetaMaskIcon() {
-    return const Icon(
-      Icons.token_rounded,
-      color: Color(0xFFF6851B),
-      size: 19,
     );
   }
 }
