@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "36104314118",
+    "project_id": "anvaya-38c1f",
+    "storage_bucket": "anvaya-38c1f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:36104314118:android:f7f1ee344d853e61d15287",
+        "android_client_info": {
+          "package_name": "com.example.farmer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "36104314118-pdrfla1s30d9cohdcgf7a42srors8qog.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9ZWhm1g3XTTkom2V98E8oMLFoJWOgr4o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "36104314118-pdrfla1s30d9cohdcgf7a42srors8qog.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

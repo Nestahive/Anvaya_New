@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anvaya Vision Test Engine</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #10b981;
+            --accent-hover: #059669;
+            --border: #334155;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .upload-area img#preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            display: none;
+            z-index: 10;
+        }
+
+        .upload-text {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            z-index: 5;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: background 0.3s ease, transform 0.1s ease;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+            color: var(--text-muted);
+        }
+
+        .loading {
+            display: none;
+            margin-top: 1.5rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .results {
+            margin-top: 2rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: none;
+            border: 1px solid var(--border);
+        }
+
+        .results h3 {
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .value {
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        .status-VERIFIED {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .status-REJECTED {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .status-RETAKE_REQUIRED {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .error-message {
+            color: var(--error);
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Anvaya Vision Test</h1>
+        <div id="serverStatus" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 0.5rem; margin-bottom: 1rem; padding: 6px 12px; border-radius: 99px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); font-size: 0.9rem;">
+            <div id="statusDot" style="width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted);"></div>
+            <span id="statusText">Checking Backend Status...</span>
+        </div>
+        <p style="color: var(--text-muted);">Upload a photo of produce to test the Gemini Engine</p>
+    </header>
+
+    <div class="container">
+        <input type="file" id="fileInput" accept="image/*">
+
+        <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-text" id="uploadText">
+                📸 Click to Upload Image<br><br>
+                <span style="font-size: 0.9rem; opacity: 0.7;">or drag and drop here</span>
+            </div>
+            <img id="preview" alt="Preview">
+        </div>
+
+        <button id="analyzeBtn" disabled>Analyze Produce</button>
+
+        <div class="error-message" id="errorMsg"></div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Gemini is analyzing the image...</p>
+        </div>
+
+        <div class="results" id="results">
+            <h3>Analysis Complete</h3>
+            <div class="result-row">
+                <span class="label">Status</span>
+                <span class="value status-badge" id="resStatus">--</span>
+            </div>
+            <div class="result-row">
+                <span class="label">Produce</span>
+                <span class="value" id="resProduce">--</span>
+            </div>
+            <div class="result-row">
+                <span class="label">Condition</span>
+                <span class="value" id="resCondition">--</span>
+            </div>
+            <div class="result-row">
+                <span class="label">Confidence</span>
+                <span class="value" id="resConfidence">--</span>
+            </div>
+            <div class="result-row" style="flex-direction: column; align-items: flex-start;">
+                <span class="label" style="margin-bottom: 0.5rem;">Visible Issues</span>
+                <div id="resIssues" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000/ai/analyze';
+
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const uploadText = document.getElementById('uploadText');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const errorMsg = document.getElementById('errorMsg');
+        const dropZone = document.getElementById('dropZone');
+
+        let selectedFile = null;
+
+        // Drag and drop support
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--accent)';
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--border)';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--border)';
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError("Please upload a valid image file.");
+                return;
+            }
+
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                uploadText.style.display = 'none';
+                analyzeBtn.disabled = false;
+
+                // Hide previous results
+                results.style.display = 'none';
+                errorMsg.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
+            loading.style.display = 'none';
+            analyzeBtn.style.display = 'block';
+        }
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            // UI State updates
+            analyzeBtn.style.display = 'none';
+            results.style.display = 'none';
+            errorMsg.style.display = 'none';
+            loading.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Update UI with results
+                document.getElementById('resStatus').textContent = data.status || 'UNKNOWN';
+                document.getElementById('resStatus').className = `value status-badge status-${data.status}`;
+
+                document.getElementById('resProduce').textContent = data.produce || 'N/A';
+                document.getElementById('resCondition').textContent = data.condition || 'N/A';
+
+                if (data.confidence) {
+                    document.getElementById('resConfidence').textContent = `${Math.round(data.confidence * 100)}%`;
+                } else {
+                    document.getElementById('resConfidence').textContent = 'N/A';
+                }
+
+                const issuesContainer = document.getElementById('resIssues');
+                issuesContainer.innerHTML = '';
+                if (data.visible_issues && data.visible_issues.length > 0) {
+                    data.visible_issues.forEach(issue => {
+                        const badge = document.createElement('span');
+                        badge.style.background = 'rgba(255,255,255,0.1)';
+                        badge.style.padding = '4px 10px';
+                        badge.style.borderRadius = '6px';
+                        badge.style.fontSize = '0.85rem';
+                        badge.style.color = '#cbd5e1';
+                        badge.textContent = issue;
+                        issuesContainer.appendChild(badge);
+                    });
+                } else {
+                    issuesContainer.textContent = 'None detected';
+                    issuesContainer.style.color = 'var(--text-muted)';
+                }
+
+                loading.style.display = 'none';
+                results.style.display = 'block';
+                analyzeBtn.style.display = 'block';
+                analyzeBtn.textContent = 'Test Another Image';
+
+            } catch (err) {
+                showError("Failed to analyze image: " + err.message);
+            }
+        });
+
+        // Backend Status Checker
+        async function checkBackendStatus() {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            try {
+                const res = await fetch('http://127.0.0.1:8000/health');
+                if (res.ok) {
+                    statusDot.style.background = '#10b981'; // Green
+                    statusText.textContent = 'Backend: ONLINE (Port 8000)';
+                    statusText.style.color = '#10b981';
+                } else {
+                    throw new Error('Not ok');
+                }
+            } catch (err) {
+                statusDot.style.background = '#ef4444'; // Red
+                statusText.textContent = 'Backend: OFFLINE (Is it running?)';
+                statusText.style.color = '#ef4444';
+            }
+        }
+
+        // Check immediately, then every 3 seconds
+        checkBackendStatus();
+        setInterval(checkBackendStatus, 3000);
+    </script>
+</body>
+
+</html>
