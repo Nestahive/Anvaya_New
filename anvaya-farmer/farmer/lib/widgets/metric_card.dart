@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 
 /// Compact metric card displaying a key statistic.
@@ -23,7 +24,8 @@ class MetricCard extends StatelessWidget {
           color: AppColors.cardDark,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: accentColor?.withValues(alpha: 0.25) ?? AppColors.borderGreen,
+            color:
+                accentColor?.withValues(alpha: 0.25) ?? AppColors.borderGreen,
             width: 1.0,
           ),
         ),

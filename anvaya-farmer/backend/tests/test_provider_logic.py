@@ -24,22 +24,37 @@ class TestDecideFunction:
     """Tests for CurrentVisionProvider._decide() — pure logic, no I/O."""
 
     def test_clear_potato_is_verified(self):
-        """A clear potato image → VERIFIED, fresh, high confidence."""
+        """A clear potato image → VERIFIED, fresh, genuine high confidence."""
         p = RawPerception(
             image_usable=True,
             produce_visible=True,
             main_produce="Potato",
             condition="fresh",
             visible_issues=[],
-            certainty="high",
+            confidence_score=0.94,
         )
         result = CurrentVisionProvider._decide(p)
         assert result["status"] == "VERIFIED"
         assert result["produce"] == "Potato"
         assert result["condition"] == "fresh"
-        assert result["confidence"] == 0.68
-        assert result["confidence"] <= 0.70
+        assert result["confidence"] == 0.94
         assert result["visible_issues"] == []
+
+    def test_multiple_produce_detected_is_retake(self):
+        """Multiple produce items in image → RETAKE_REQUIRED with message."""
+        p = RawPerception(
+            image_usable=True,
+            produce_visible=True,
+            has_multiple_produce=True,
+            detected_items=["Guava", "Orange", "Garlic"],
+            main_produce=None,
+            condition=None,
+            visible_issues=[],
+        )
+        result = CurrentVisionProvider._decide(p)
+        assert result["status"] == "RETAKE_REQUIRED"
+        assert result["produce"] is None
+        assert result["message"] == "Multiple produce detected. Please capture one item at a time."
 
     def test_unusable_image_is_retake(self):
         """Unreadable image → RETAKE_REQUIRED."""
@@ -90,7 +105,7 @@ class TestDecideFunction:
             main_produce="Apple",
             condition="fresh",
             visible_issues=["minor scratch"],
-            certainty="high",
+            confidence_score=0.91,
         )
         result = CurrentVisionProvider._decide(p)
         assert result["status"] == "VERIFIED"
@@ -98,19 +113,19 @@ class TestDecideFunction:
         assert result["visible_issues"] == []
 
     def test_medium_certainty_confidence(self):
-        """Medium certainty → confidence 0.75."""
+        """Medium certainty or confidence score → genuine confidence."""
         p = RawPerception(
             image_usable=True,
             produce_visible=True,
             main_produce="Banana",
             condition="damaged",
             visible_issues=["small bruise"],
-            certainty="medium",
+            confidence_score=0.82,
         )
         result = CurrentVisionProvider._decide(p)
         assert result["status"] == "VERIFIED"
-        assert result["confidence"] == 0.62
-        assert result["confidence"] <= 0.70
+        assert result["confidence"] == 0.82
+        assert "small bruise" in result["visible_issues"]
 
     def test_null_condition_is_retake(self):
         """Null condition → RETAKE_REQUIRED."""
@@ -120,7 +135,7 @@ class TestDecideFunction:
             main_produce="Mango",
             condition=None,
             visible_issues=[],
-            certainty="high",
+            confidence_score=0.90,
         )
         result = CurrentVisionProvider._decide(p)
         assert result["status"] == "RETAKE_REQUIRED"
@@ -245,7 +260,7 @@ class TestRetryBehaviour:
 
         provider._client.aio.models.generate_content = fake_generate
 
-        with pytest.raises(InferenceUnavailableError, match="unavailable after 2"):
+        with pytest.raises(InferenceUnavailableError, match="unavailable across attempted models"):
             await provider._call_gemini(b"fake-image", "image/jpeg")
 
-        assert call_count == 2  # initial + 1 retry
+        assert call_count == 8  # 2 attempts x 4 candidate models

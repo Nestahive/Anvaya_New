@@ -1,6 +1,8 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../models/inference_result.dart';
 import '../services/vision_service.dart';
 import '../theme/app_theme.dart';
@@ -159,7 +161,11 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
           if (_selectedImageBytes != null)
             TextButton.icon(
               onPressed: _resetVerification,
-              icon: const Icon(Icons.refresh_rounded, size: 18, color: AppColors.textMuted),
+              icon: const Icon(
+                Icons.refresh_rounded,
+                size: 18,
+                color: AppColors.textMuted,
+              ),
               label: const Text(
                 'Reset',
                 style: TextStyle(color: AppColors.textMuted, fontSize: 13),
@@ -199,21 +205,41 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
               const SizedBox(height: 24),
 
               // Main Action Buttons
-              if (_selectedImageBytes != null && _inferenceResult == null)
+              if (_selectedImageBytes != null && _inferenceResult == null) ...[
                 AppPrimaryButton(
                   label: 'Analyze Produce',
                   icon: Icons.check_circle_outline_rounded,
                   isLoading: _isAnalyzing,
                   onPressed: _analyzeImage,
-                )
-              else if (_inferenceResult != null) ...[
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0xFF333E37)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: _isAnalyzing
+                      ? null
+                      : () => _pickImage(ImageSource.camera),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Retake Photo'),
+                ),
+              ] else if (_inferenceResult != null) ...[
                 if (_inferenceResult!.isVerified) ...[
                   AppPrimaryButton(
                     label: 'Fill Produce Form with AI Info',
                     icon: Icons.assignment_turned_in_rounded,
                     onPressed: () {
-                      final category = _guessCategory(_inferenceResult!.produce);
-                      final issuesText = _inferenceResult!.visibleIssues.isNotEmpty
+                      final category = _guessCategory(
+                        _inferenceResult!.produce,
+                      );
+                      final issuesText =
+                          _inferenceResult!.visibleIssues.isNotEmpty
                           ? 'Visible Issues: ${_inferenceResult!.visibleIssues.join(", ")}'
                           : 'No visible defects.';
                       final desc =
@@ -273,7 +299,11 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
       ),
       child: const Row(
         children: [
-          Icon(Icons.verified_outlined, color: AppColors.primaryGreen, size: 20),
+          Icon(
+            Icons.verified_outlined,
+            color: AppColors.primaryGreen,
+            size: 20,
+          ),
           SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -322,7 +352,7 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Take a photo or upload an image of any fruit or vegetable to verify condition.',
+            'Take a live photo of any fruit or vegetable using the camera to verify condition.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.textSecondary,
@@ -331,24 +361,10 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _buildSourceButton(
-                  icon: Icons.camera_alt_rounded,
-                  label: 'Camera',
-                  onTap: () => _pickImage(ImageSource.camera),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildSourceButton(
-                  icon: Icons.photo_library_rounded,
-                  label: 'Gallery',
-                  onTap: () => _pickImage(ImageSource.gallery),
-                ),
-              ),
-            ],
+          _buildSourceButton(
+            icon: Icons.camera_alt_rounded,
+            label: 'Open Camera & Capture',
+            onTap: () => _pickImage(ImageSource.camera),
           ),
         ],
       ),
@@ -361,6 +377,7 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
     required VoidCallback onTap,
   }) {
     return Container(
+      width: double.infinity,
       height: 48,
       decoration: BoxDecoration(
         color: const Color(0xFF19211C),
@@ -408,10 +425,7 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.memory(
-                  _selectedImageBytes!,
-                  fit: BoxFit.cover,
-                ),
+                Image.memory(_selectedImageBytes!, fit: BoxFit.cover),
                 Positioned(
                   top: 10,
                   right: 10,
@@ -421,9 +435,13 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.cameraswitch_rounded, color: Colors.white, size: 20),
-                      tooltip: 'Retake / Choose different image',
-                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: const Icon(
+                        Icons.cameraswitch_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      tooltip: 'Retake photo',
+                      onPressed: () => _pickImage(ImageSource.camera),
                     ),
                   ),
                 ),
@@ -442,7 +460,10 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
       decoration: BoxDecoration(
         color: AppColors.error.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.4), width: 1.0),
+        border: Border.all(
+          color: AppColors.error.withValues(alpha: 0.4),
+          width: 1.0,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -450,7 +471,9 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
           Row(
             children: [
               Icon(
-                _isRetryable ? Icons.cloud_off_rounded : Icons.error_outline_rounded,
+                _isRetryable
+                    ? Icons.cloud_off_rounded
+                    : Icons.error_outline_rounded,
                 color: AppColors.error,
                 size: 20,
               ),
@@ -474,8 +497,12 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
-                  side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  side: BorderSide(
+                    color: AppColors.error.withValues(alpha: 0.5),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: _isAnalyzing ? null : _analyzeImage,
                 icon: const Icon(Icons.refresh_rounded, size: 16),
@@ -496,9 +523,9 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
     if (result.isVerified) {
       return _buildVerifiedCard(result);
     } else if (result.isRejected) {
-      return _buildRejectedCard();
+      return _buildRejectedCard(result);
     } else {
-      return _buildRetakeRequiredCard();
+      return _buildRetakeRequiredCard(result);
     }
   }
 
@@ -529,7 +556,10 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryGreen.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(6),
@@ -537,7 +567,11 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle_rounded, color: AppColors.primaryGreen, size: 16),
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 16,
+                    ),
                     SizedBox(width: 6),
                     Text(
                       'AI VERIFIED',
@@ -581,11 +615,17 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: conditionColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: conditionColor.withValues(alpha: 0.4), width: 1),
+                  border: Border.all(
+                    color: conditionColor.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   result.displayCondition,
@@ -621,7 +661,11 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
                   children: [
                     const Padding(
                       padding: EdgeInsets.only(top: 6.0, right: 8.0),
-                      child: Icon(Icons.circle, size: 6, color: AppColors.warning),
+                      child: Icon(
+                        Icons.circle,
+                        size: 6,
+                        color: AppColors.warning,
+                      ),
                     ),
                     Expanded(
                       child: Text(
@@ -646,8 +690,12 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
   /// State 2: REJECTED
   /// Display:
   /// ✕ NO PRODUCE DETECTED
-  /// Please capture a fruit or vegetable.
-  Widget _buildRejectedCard() {
+  /// Dynamic reason or: Please capture a fruit or vegetable.
+  Widget _buildRejectedCard(InferenceResult result) {
+    final messageText = (result.message != null && result.message!.isNotEmpty)
+        ? result.message!
+        : 'Please capture a fruit or vegetable.';
+
     return AppCard(
       borderColor: AppColors.error.withValues(alpha: 0.4),
       padding: const EdgeInsets.all(22),
@@ -680,10 +728,10 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Please capture a fruit or vegetable.',
+          Text(
+            messageText,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,
               height: 1.4,
@@ -694,7 +742,9 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
               side: const BorderSide(color: Color(0xFF333E37)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () => _pickImage(ImageSource.camera),
             icon: const Icon(Icons.camera_alt_outlined, size: 18),
@@ -708,8 +758,12 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
   /// State 3: RETAKE_REQUIRED
   /// Display:
   /// ↻ RETAKE PHOTO
-  /// The image quality is too low for reliable analysis.
-  Widget _buildRetakeRequiredCard() {
+  /// Dynamic message (e.g. "Multiple produce detected. Please capture one item at a time.")
+  Widget _buildRetakeRequiredCard(InferenceResult result) {
+    final messageText = (result.message != null && result.message!.isNotEmpty)
+        ? result.message!
+        : 'The image quality is too low\nfor reliable analysis.';
+
     return AppCard(
       borderColor: AppColors.warning.withValues(alpha: 0.4),
       padding: const EdgeInsets.all(22),
@@ -742,10 +796,10 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'The image quality is too low\nfor reliable analysis.',
+          Text(
+            messageText,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,
               height: 1.4,
@@ -756,7 +810,9 @@ class _ProduceVerificationScreenState extends State<ProduceVerificationScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
               side: const BorderSide(color: Color(0xFF333E37)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () => _pickImage(ImageSource.camera),
             icon: const Icon(Icons.refresh_rounded, size: 18),

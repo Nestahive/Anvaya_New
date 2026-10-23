@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 import '../widgets/anvaya_logo.dart';
 import '../widgets/swipe_slider.dart';
@@ -9,11 +10,8 @@ class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   void _onGetStartedCompleted(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const LoginScreen(),
-      ),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => const LoginScreen()));
   }
 
   @override
@@ -22,23 +20,26 @@ class SplashScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Large, soft neon green radial glow positioned at the top-right fading into black
+          // Large, soft neon green radial glow positioned at the top-center, fading into black
           Positioned(
-            top: -160,
-            right: -80,
-            child: Container(
-              width: 520,
-              height: 520,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.primaryGreen.withValues(alpha: 0.38),
-                    AppColors.primaryGreen.withValues(alpha: 0.16),
-                    AppColors.deepGreenGlow.withValues(alpha: 0.05),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.35, 0.65, 1.0],
+            top: -200,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 600,
+                height: 600,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.primaryGreen.withValues(alpha: 0.32),
+                      AppColors.primaryGreen.withValues(alpha: 0.12),
+                      AppColors.deepGreenGlow.withValues(alpha: 0.04),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.30, 0.60, 1.0],
+                  ),
                 ),
               ),
             ),
@@ -47,15 +48,29 @@ class SplashScreen extends StatelessWidget {
           // Main content
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16.0,
+              ),
               child: Column(
                 children: [
-                  const Spacer(flex: 2),
+                  const Spacer(flex: 3),
 
-                  // Official Anvaya Wordmark placed in the upper area matching Figma
-                  const Center(
-                    child: AnvayaWordmark(
-                      height: 80,
+                  // Large elegant Anvaya Wordmark with subtle green glow behind it
+                  Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryGreen.withValues(
+                              alpha: 0.08,
+                            ),
+                            blurRadius: 60,
+                            spreadRadius: 30,
+                          ),
+                        ],
+                      ),
+                      child: const AnvayaWordmark(height: 110),
                     ),
                   ),
 

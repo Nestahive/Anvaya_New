@@ -12,6 +12,7 @@ class NormalizedInferenceResult(BaseModel):
     condition: Optional[Literal["fresh", "damaged", "spoiled"]] = None
     confidence: Optional[float] = None
     visible_issues: List[str] = Field(default_factory=list)
+    message: Optional[str] = None
 
     model_config = {
         "extra": "forbid",  # Strictly forbid any additional fields

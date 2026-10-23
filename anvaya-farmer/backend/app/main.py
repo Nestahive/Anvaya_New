@@ -4,7 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.ai import router as ai_router
+from app.api.batches import router as batches_router
 from app.core.config import settings
+from app.db.database import init_db
 
 # Configure logging
 logging.basicConfig(
@@ -13,6 +15,9 @@ logging.basicConfig(
 )
 # Anvaya Vision Inference Engine
 logger = logging.getLogger("anvaya_vision")
+
+# Initialize database tables
+init_db()
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -40,8 +45,9 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "An internal service error occurred. Please try again."},
     )
 
-# Include AI router
+# Include Routers
 app.include_router(ai_router)
+app.include_router(batches_router)
 
 
 @app.get("/health", tags=["Health"])

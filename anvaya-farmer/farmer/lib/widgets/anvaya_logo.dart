@@ -5,11 +5,7 @@ class AnvayaLogoMark extends StatelessWidget {
   final double size;
   final Color? color;
 
-  const AnvayaLogoMark({
-    super.key,
-    this.size = 38.0,
-    this.color,
-  });
+  const AnvayaLogoMark({super.key, this.size = 38.0, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +21,9 @@ class AnvayaLogoMark extends StatelessWidget {
           width: size * 0.9,
           height: size,
           child: CustomPaint(
-            painter: _AnvayaMarkPainter(color: color ?? const Color(0xFFE2E8F0)),
+            painter: _AnvayaMarkPainter(
+              color: color ?? const Color(0xFFE2E8F0),
+            ),
           ),
         );
       },
@@ -51,16 +49,8 @@ class _AnvayaMarkPainter extends CustomPainter {
     // 1. Left organic leaf petal
     final leaf = Path();
     leaf.moveTo(w * 0.05, h * 0.65);
-    leaf.cubicTo(
-      w * 0.02, h * 0.50,
-      w * 0.22, h * 0.44,
-      w * 0.38, h * 0.44,
-    );
-    leaf.cubicTo(
-      w * 0.36, h * 0.58,
-      w * 0.22, h * 0.68,
-      w * 0.05, h * 0.65,
-    );
+    leaf.cubicTo(w * 0.02, h * 0.50, w * 0.22, h * 0.44, w * 0.38, h * 0.44);
+    leaf.cubicTo(w * 0.36, h * 0.58, w * 0.22, h * 0.68, w * 0.05, h * 0.65);
     leaf.close();
     canvas.drawPath(leaf, paint);
 
@@ -85,12 +75,7 @@ class AnvayaWordmark extends StatelessWidget {
   final double? width;
   final Color? color;
 
-  const AnvayaWordmark({
-    super.key,
-    this.height = 70.0,
-    this.width,
-    this.color,
-  });
+  const AnvayaWordmark({super.key, this.height = 70.0, this.width, this.color});
 
   @override
   Widget build(BuildContext context) {

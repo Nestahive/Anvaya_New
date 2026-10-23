@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import '../models/inference_result.dart';
 
 class VisionServiceException implements Exception {
@@ -30,13 +32,19 @@ class VisionService {
     try {
       if (Platform.isAndroid) {
         return [
-          'http://127.0.0.1:8000',     // Forwarded directly via adb reverse
-          'http://192.168.0.104:8000', // Wi-Fi LAN IP
-          'http://10.0.2.2:8000',      // Android emulator loopback
+          'http://127.0.0.1:8000', // Forwarded directly via adb reverse (instant over USB)
+          'http://192.168.1.4:8000', // Current active Wi-Fi LAN IP
+          'http://10.92.100.57:8000', // Active Ethernet LAN IP
+          'http://10.0.2.2:8000', // Android emulator loopback
+          'http://192.168.0.102:8000', // Fallback Wi-Fi LAN IP
         ];
       }
     } catch (_) {}
-    return ['http://127.0.0.1:8000'];
+    return [
+      'http://127.0.0.1:8000',
+      'http://192.168.1.4:8000',
+      'http://localhost:8000',
+    ];
   }
 
   static String get defaultBaseUrl => candidateBaseUrls.first;
@@ -47,18 +55,49 @@ class VisionService {
     _baseUrl = url.trim().replaceAll(RegExp(r'/+$'), '');
   }
 
+  /// Fast parallel health check probe to instantly find reachable backend
+  Future<String?> _resolveWorkingHost(List<String> candidates) async {
+    final futures = candidates.map((cand) async {
+      try {
+        final res = await http
+            .get(Uri.parse('$cand/health'))
+            .timeout(const Duration(milliseconds: 1500));
+        if (res.statusCode == 200) {
+          return cand;
+        }
+      } catch (_) {}
+      return null;
+    });
+
+    final results = await Future.wait(futures);
+    for (final host in results) {
+      if (host != null) {
+        _baseUrl = host;
+        return host;
+      }
+    }
+    return null;
+  }
+
   /// Sends the selected image to POST /ai/analyze and returns the fixed normalized result.
   Future<InferenceResult> analyzeProduceImage({
     required Uint8List imageBytes,
     required String filename,
   }) async {
-    final urlsToTry = <String>[_baseUrl];
+    final candidates = <String>[_baseUrl];
     for (final cand in candidateBaseUrls) {
-      if (!urlsToTry.contains(cand)) {
-        urlsToTry.add(cand);
+      if (!candidates.contains(cand)) {
+        candidates.add(cand);
       }
     }
 
+    // Resolve reachable host fast to prevent long connection timeouts
+    final activeHost =
+        await _resolveWorkingHost(candidates) ?? candidates.first;
+    final urlsToTry = <String>[
+      activeHost,
+      ...candidates.where((u) => u != activeHost),
+    ];
 
     for (final base in urlsToTry) {
       final uri = Uri.parse('$base/ai/analyze');
@@ -66,15 +105,11 @@ class VisionService {
       try {
         final request = http.MultipartRequest('POST', uri);
         request.files.add(
-          http.MultipartFile.fromBytes(
-            'image',
-            imageBytes,
-            filename: filename,
-          ),
+          http.MultipartFile.fromBytes('image', imageBytes, filename: filename),
         );
 
         final streamedResponse = await request.send().timeout(
-          const Duration(seconds: 35),
+          const Duration(seconds: 25),
           onTimeout: () {
             throw VisionServiceException(
               'Request timed out. Please try again.',
@@ -89,18 +124,21 @@ class VisionService {
           _baseUrl = base; // Remember the working endpoint
           final Map<String, dynamic> jsonMap = jsonDecode(responseBody);
           return InferenceResult.fromJson(jsonMap);
-        } else if (streamedResponse.statusCode == 400 || streamedResponse.statusCode == 413) {
+        } else if (streamedResponse.statusCode == 400 ||
+            streamedResponse.statusCode == 413) {
           try {
             final errJson = jsonDecode(responseBody);
             final detail = errJson['detail'] ?? 'Invalid image file provided.';
             throw VisionServiceException(detail);
           } catch (e) {
             if (e is VisionServiceException) rethrow;
-            throw VisionServiceException('Invalid image file. Please provide a clear JPEG or PNG.');
+            throw VisionServiceException(
+              'Invalid image file. Please provide a clear JPEG or PNG.',
+            );
           }
         } else if (streamedResponse.statusCode == 503) {
           throw VisionServiceException(
-            'Something went wrong. Please try again.',
+            'Analysis service is busy. Please try again.',
             isRetryable: true,
           );
         } else {

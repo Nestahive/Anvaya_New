@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/anvaya_logo.dart';
+import '../widgets/brand_icons.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_text_field.dart';
 import 'home_dashboard_screen.dart';
@@ -27,6 +29,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? _emailError;
   String? _passwordError;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
 
   @override
   void dispose() {
@@ -35,6 +38,48 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _handleGoogleSignIn() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      final credential = await _authService.signInWithGoogle();
+      if (!mounted) return;
+      if (credential != null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const FarmerHomeScreen()),
+          (route) => false,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AuthService.parseAuthException(e)),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google Sign-In failed: $e'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleLoading = false);
+      }
+    }
   }
 
   void _handleSignUp() async {
@@ -64,9 +109,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
         if (!mounted) return;
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const FarmerHomeScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const FarmerHomeScreen()),
           (route) => false,
         );
       } on FirebaseAuthException catch (e) {
@@ -76,16 +119,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
             content: Text(AuthService.parseAuthException(e)),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       } catch (e) {
         if (!mounted) return;
         // Fallback for mock/test if Firebase project credentials are not finalized
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const FarmerHomeScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const FarmerHomeScreen()),
           (route) => false,
         );
       } finally {
@@ -127,9 +170,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
 
+          // Lower-left subtle glow
+          Positioned(
+            bottom: -100,
+            left: -80,
+            child: Container(
+              width: 340,
+              height: 340,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.primaryGreen.withValues(alpha: 0.14),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.6],
+                ),
+              ),
+            ),
+          ),
+
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16.0,
+              ),
               physics: const ClampingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -137,11 +203,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 16),
 
                   // Centered Anvaya Logo Mark
-                  const Center(
-                    child: AnvayaLogoMark(
-                      size: 42,
-                    ),
-                  ),
+                  const Center(child: AnvayaLogoMark(size: 42)),
 
                   const SizedBox(height: 18),
 
@@ -163,14 +225,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     children: [
                       AppSocialButton(
                         label: 'Google',
-                        icon: _buildGoogleIcon(),
-                        onPressed: () {},
+                        icon: const GoogleLogo(size: 24),
+                        isLoading: _isGoogleLoading,
+                        onPressed: _handleGoogleSignIn,
                       ),
                       const SizedBox(width: 14),
                       AppSocialButton(
                         label: 'Metamask',
-                        icon: _buildMetaMaskIcon(),
-                        onPressed: () {},
+                        icon: const MetaMaskLogo(size: 24),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'MetaMask Web3 wallet connection coming soon',
+                              ),
+                              backgroundColor: const Color(0xFF1E201F),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -310,35 +386,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildGoogleIcon() {
-    return Container(
-      width: 18,
-      height: 18,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-      ),
-      child: const Center(
-        child: Text(
-          'G',
-          style: TextStyle(
-            color: Color(0xFF4285F4),
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetaMaskIcon() {
-    return const Icon(
-      Icons.token_rounded,
-      color: Color(0xFFF6851B),
-      size: 19,
     );
   }
 }

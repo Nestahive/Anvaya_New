@@ -1,6 +1,9 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+
 import '../models/inference_result.dart';
+import '../services/batch_service.dart';
 import '../theme/app_theme.dart';
 import 'produce_verification_screen.dart';
 
@@ -28,22 +31,28 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
   late TextEditingController _cropNameController;
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
+  late TextEditingController _quantityController;
   late TextEditingController _dateController;
   late TextEditingController _locationController;
   String? _selectedCategory;
   Uint8List? _imageBytes;
+  bool _isPublishing = false;
 
   @override
   void initState() {
     super.initState();
-    _cropNameController =
-        TextEditingController(text: widget.initialCropName ?? '');
-    _descriptionController =
-        TextEditingController(text: widget.initialDescription ?? '');
+    _cropNameController = TextEditingController(
+      text: widget.initialCropName ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.initialDescription ?? '',
+    );
     _priceController = TextEditingController(text: '4.50');
+    _quantityController = TextEditingController(text: '200 kg');
     _dateController = TextEditingController(text: _formatCurrentDate());
-    _locationController =
-        TextEditingController(text: 'Green Valley Farm, Sector B');
+    _locationController = TextEditingController(
+      text: 'Green Valley Farm, Sector B',
+    );
     _selectedCategory = widget.initialCategory ?? 'Vegetables';
     _imageBytes = widget.initialImageBytes;
   }
@@ -53,6 +62,7 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
     _cropNameController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
+    _quantityController.dispose();
     _dateController.dispose();
     _locationController.dispose();
     super.dispose();
@@ -76,8 +86,9 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
     );
   }
 
-  void _publishProduce() {
-    if (_cropNameController.text.trim().isEmpty) {
+  Future<void> _publishProduce() async {
+    final cropName = _cropNameController.text.trim();
+    if (cropName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a crop name'),
@@ -87,43 +98,94 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
       return;
     }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF131922),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.verified, color: AppColors.primaryGreen),
-            SizedBox(width: 10),
-            Text('Produce Published!', style: TextStyle(color: Colors.white)),
+    setState(() {
+      _isPublishing = true;
+    });
+
+    try {
+      final verificationStatus = widget.inferenceResult != null
+          ? (widget.inferenceResult!.isVerified ? 'VERIFIED' : 'PENDING')
+          : 'VERIFIED';
+
+      final createdBatch = await BatchService().registerBatch(
+        title: cropName,
+        category: _selectedCategory ?? 'Vegetables',
+        quantity: _quantityController.text.trim().isNotEmpty
+            ? _quantityController.text.trim()
+            : '100 kg',
+        price: _priceController.text.trim().startsWith('\$')
+            ? _priceController.text.trim()
+            : '\$${_priceController.text.trim()}',
+        date: _dateController.text.trim().isNotEmpty
+            ? _dateController.text.trim()
+            : _formatCurrentDate(),
+        status: verificationStatus,
+        condition: widget.inferenceResult?.condition,
+        confidence: widget.inferenceResult?.confidence,
+        visibleIssues: widget.inferenceResult?.visibleIssues ?? [],
+        location: _locationController.text.trim(),
+        description: _descriptionController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF131922),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.verified, color: AppColors.primaryGreen),
+              SizedBox(width: 10),
+              Text('Produce Published!', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+          content: Text(
+            'Batch "${createdBatch.title}" (${createdBatch.batchId}) has been successfully saved to the database and published on-chain.',
+            style: const TextStyle(color: Color(0xFFA0AEC0)),
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: const Text('OK'),
+            ),
           ],
         ),
-        content: Text(
-          'Batch "${_cropNameController.text}" has been encrypted and published to the blockchain tracking ledger.',
-          style: const TextStyle(color: Color(0xFFA0AEC0)),
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryGreen,
-              foregroundColor: Colors.black,
-            ),
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Return to previous screen
-            },
-            child: const Text('OK'),
+      );
+
+      if (mounted) {
+        Navigator.of(context).pop(true); // Return to previous screen with success
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to publish produce: $e'),
+            backgroundColor: Colors.redAccent,
           ),
-        ],
-      ),
-    );
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPublishing = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isAIVerified = widget.initialCropName != null ||
-        widget.inferenceResult != null;
+    final bool isAIVerified =
+        widget.initialCropName != null || widget.inferenceResult != null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -159,25 +221,31 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                    width: 20,
-                    height: 4,
-                    decoration: BoxDecoration(
-                        color: AppColors.primaryGreen,
-                        borderRadius: BorderRadius.circular(2))),
+                  width: 20,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
                 const SizedBox(width: 4),
                 Container(
-                    width: 8,
-                    height: 4,
-                    decoration: BoxDecoration(
-                        color: const Color(0xFF2A2E33),
-                        borderRadius: BorderRadius.circular(2))),
+                  width: 8,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2A2E33),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
                 const SizedBox(width: 4),
                 Container(
-                    width: 8,
-                    height: 4,
-                    decoration: BoxDecoration(
-                        color: const Color(0xFF2A2E33),
-                        borderRadius: BorderRadius.circular(2))),
+                  width: 8,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2A2E33),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ],
             ),
           ],
@@ -188,7 +256,11 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
         children: [
           SingleChildScrollView(
             padding: const EdgeInsets.only(
-                left: 20.0, right: 20.0, top: 24.0, bottom: 100.0),
+              left: 20.0,
+              right: 20.0,
+              top: 24.0,
+              bottom: 100.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -223,7 +295,9 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
                           _buildTextField(
                             controller: _priceController,
                             hintText: '0.00',
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                           ),
                         ],
                       ),
@@ -244,24 +318,32 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
                               child: DropdownButton<String>(
                                 isExpanded: true,
                                 dropdownColor: const Color(0xFF131922),
-                                hint: const Text('Select',
-                                    style: TextStyle(color: Color(0xFF4A5568))),
+                                hint: const Text(
+                                  'Select',
+                                  style: TextStyle(color: Color(0xFF4A5568)),
+                                ),
                                 value: _selectedCategory,
-                                icon: const Icon(Icons.arrow_drop_down,
-                                    color: Color(0xFF4A5568)),
-                                items: [
-                                  'Fruits',
-                                  'Vegetables',
-                                  'Grains',
-                                  'Coffee'
-                                ].map((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value,
-                                        style: const TextStyle(
-                                            color: Colors.white)),
-                                  );
-                                }).toList(),
+                                icon: const Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Color(0xFF4A5568),
+                                ),
+                                items:
+                                    [
+                                      'Fruits',
+                                      'Vegetables',
+                                      'Grains',
+                                      'Coffee',
+                                    ].map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(
+                                          value,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
                                 onChanged: (value) {
                                   setState(() {
                                     _selectedCategory = value;
@@ -274,6 +356,14 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 20),
+
+                _buildLabel('QUANTITY / HARVEST VOLUME'),
+                _buildTextField(
+                  controller: _quantityController,
+                  hintText: 'e.g. 250 kg, 100 crates',
+                  prefixIcon: Icons.scale_rounded,
                 ),
                 const SizedBox(height: 20),
 
@@ -308,8 +398,11 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.gps_fixed,
-                            color: Colors.redAccent, size: 18),
+                        Icon(
+                          Icons.gps_fixed,
+                          color: Colors.redAccent,
+                          size: 18,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Get Current GPS',
@@ -335,21 +428,22 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
                         margin: const EdgeInsets.only(right: 12),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.primaryGreen, width: 1.5),
+                          border: Border.all(
+                            color: AppColors.primaryGreen,
+                            width: 1.5,
+                          ),
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: Image.memory(
-                            _imageBytes!,
-                            fit: BoxFit.cover,
-                          ),
+                          child: Image.memory(_imageBytes!, fit: BoxFit.cover),
                         ),
                       ),
                     InkWell(
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const ProduceVerificationScreen(),
+                            builder: (context) =>
+                                const ProduceVerificationScreen(),
                           ),
                         );
                       },
@@ -360,19 +454,26 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
                           color: const Color(0xFF131922),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: const Color(0xFF2A3644),
-                              style: BorderStyle.solid),
+                            color: const Color(0xFF2A3644),
+                            style: BorderStyle.solid,
+                          ),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.add, color: AppColors.primaryGreen),
+                            const Icon(
+                              Icons.add,
+                              color: AppColors.primaryGreen,
+                            ),
                             const SizedBox(height: 4),
                             Text(
-                              _imageBytes != null ? 'Retake photo' : 'Add photo',
+                              _imageBytes != null
+                                  ? 'Retake photo'
+                                  : 'Add photo',
                               style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  fontSize: 10),
+                                color: Colors.white.withValues(alpha: 0.5),
+                                fontSize: 10,
+                              ),
                             ),
                           ],
                         ),
@@ -381,9 +482,13 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('Upload up to 5 product images',
-                    style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
+                Text(
+                  'Upload up to 5 product images',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    fontSize: 12,
+                  ),
+                ),
 
                 const SizedBox(height: 24),
 
@@ -397,8 +502,11 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.security,
-                          color: Color(0xFFA0AEC0), size: 20),
+                      const Icon(
+                        Icons.security,
+                        color: Color(0xFFA0AEC0),
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -439,7 +547,7 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
             child: SizedBox(
               height: 54,
               child: ElevatedButton(
-                onPressed: _publishProduce,
+                onPressed: _isPublishing ? null : _publishProduce,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
                   foregroundColor: Colors.black,
@@ -449,13 +557,22 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
                   elevation: 8,
                   shadowColor: AppColors.primaryGreen.withValues(alpha: 0.5),
                 ),
-                child: const Text(
-                  'Publish Produce',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                child: _isPublishing
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.black,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const Text(
+                        'Publish Produce',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
           ),
@@ -466,14 +583,17 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
 
   Widget _buildAIVerificationBanner() {
     final produceName = widget.initialCropName ?? 'Produce';
-    final confidence = widget.inferenceResult?.confidencePercentage ?? 'Verified';
+    final confidence =
+        widget.inferenceResult?.confidencePercentage ?? 'Verified';
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFF0F2618),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.5)),
+        border: Border.all(
+          color: AppColors.primaryGreen.withValues(alpha: 0.5),
+        ),
       ),
       child: Row(
         children: [
@@ -483,7 +603,11 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
               color: AppColors.primaryGreen.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome, color: AppColors.primaryGreen, size: 20),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: AppColors.primaryGreen,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -534,7 +658,11 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
         ),
         child: const Row(
           children: [
-            Icon(Icons.camera_alt_outlined, color: AppColors.primaryGreen, size: 22),
+            Icon(
+              Icons.camera_alt_outlined,
+              color: AppColors.primaryGreen,
+              size: 22,
+            ),
             SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -542,7 +670,11 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
                 children: [
                   Text(
                     'Scan Produce with AI Camera',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                   Text(
                     'Detect produce name & quality automatically',
@@ -595,14 +727,20 @@ class _NewProduceScreenState extends State<NewProduceScreen> {
           hintText: hintText,
           hintStyle: const TextStyle(color: Color(0xFF4A5568)),
           prefixIcon: prefixIcon != null
-              ? Icon(prefixIcon,
-                  color: iconColor ?? AppColors.primaryGreen, size: 20)
+              ? Icon(
+                  prefixIcon,
+                  color: iconColor ?? AppColors.primaryGreen,
+                  size: 20,
+                )
               : null,
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );

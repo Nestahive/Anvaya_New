@@ -5,6 +5,7 @@ class InferenceResult {
   final String? condition;
   final double? confidence;
   final List<String> visibleIssues;
+  final String? message;
 
   const InferenceResult({
     required this.status,
@@ -12,6 +13,7 @@ class InferenceResult {
     this.condition,
     this.confidence,
     this.visibleIssues = const [],
+    this.message,
   });
 
   bool get isVerified => status == 'VERIFIED';
@@ -39,10 +41,12 @@ class InferenceResult {
       confidence: json['confidence'] != null
           ? (json['confidence'] as num).toDouble()
           : null,
-      visibleIssues: (json['visible_issues'] as List<dynamic>?)
+      visibleIssues:
+          (json['visible_issues'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      message: json['message'] as String?,
     );
   }
 
@@ -53,6 +57,7 @@ class InferenceResult {
       'condition': condition,
       'confidence': confidence,
       'visible_issues': visibleIssues,
+      'message': message,
     };
   }
 }

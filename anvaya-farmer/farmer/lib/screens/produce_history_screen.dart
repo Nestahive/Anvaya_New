@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import 'produce_verification_screen.dart';
 
-/// Screen 5: Produce History Screen matching reference Image 5.
+import '../models/produce_batch.dart';
+import '../services/batch_service.dart';
+import '../theme/app_theme.dart';
+
+/// Screen 5: Produce History Screen connected to persistent backend database.
 class ProduceHistoryScreen extends StatefulWidget {
   const ProduceHistoryScreen({super.key});
 
@@ -11,56 +13,71 @@ class ProduceHistoryScreen extends StatefulWidget {
 }
 
 class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
+  final BatchService _batchService = BatchService();
+
   String _selectedFilter = 'All';
   String _searchQuery = '';
+  List<ProduceBatch> _batches = [];
+  bool _isLoading = false;
+  String? _errorMessage;
 
-  final List<Map<String, dynamic>> _batches = [
-    {
-      'title': 'Organic Arabica Coffee',
-      'batchId': 'Batch #AG-8291',
-      'date': 'Oct 24, 2023 • 09:45 AM',
-      'status': 'VERIFIED',
-      'type': 'coffee',
-    },
-    {
-      'title': 'Golden Manuka Honey',
-      'batchId': 'Batch #AG-7422',
-      'date': 'Oct 23, 2023 • 02:15 PM',
-      'status': 'PENDING',
-      'type': 'honey',
-    },
-    {
-      'title': 'Fresh Baby Spinach',
-      'batchId': 'Batch #AG-1104',
-      'date': 'Oct 21, 2023 • 08:30 AM',
-      'status': 'REJECTED',
-      'type': 'spinach',
-    },
-    {
-      'title': 'Premium Robusta Coffee',
-      'batchId': 'Batch #AG-0922',
-      'date': 'Oct 19, 2023 • 11:20 AM',
-      'status': 'VERIFIED',
-      'type': 'coffee',
-    },
-    {
-      'title': 'Wildflower Honey',
-      'batchId': 'Batch #AG-0881',
-      'date': 'Oct 15, 2023 • 04:10 PM',
-      'status': 'VERIFIED',
-      'type': 'honey',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _batchService.batchesUpdatedNotifier.addListener(_onBatchesUpdated);
+    _loadBatches();
+  }
 
-  List<Map<String, dynamic>> get _filteredBatches {
+  @override
+  void dispose() {
+    _batchService.batchesUpdatedNotifier.removeListener(_onBatchesUpdated);
+    super.dispose();
+  }
+
+  void _onBatchesUpdated() {
+    if (mounted) {
+      _loadBatches(showLoading: false);
+    }
+  }
+
+  Future<void> _loadBatches({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      final list = await _batchService.fetchBatches();
+      if (mounted) {
+        setState(() {
+          _batches = list;
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Could not load produce history. Please pull to refresh.';
+        });
+      }
+    }
+  }
+
+  List<ProduceBatch> get _filteredBatches {
     return _batches.where((batch) {
-      final matchesFilter = _selectedFilter == 'All' ||
-          batch['status'].toString().toUpperCase() == _selectedFilter.toUpperCase() ||
-          (_selectedFilter == 'Flagged' && batch['status'] == 'REJECTED');
+      final matchesFilter =
+          _selectedFilter == 'All' ||
+          batch.status.toUpperCase() == _selectedFilter.toUpperCase() ||
+          (_selectedFilter == 'Flagged' && batch.status.toUpperCase() == 'REJECTED');
 
-      final matchesSearch = _searchQuery.isEmpty ||
-          batch['title'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          batch['batchId'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesSearch =
+          _searchQuery.isEmpty ||
+          batch.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          batch.batchId.toLowerCase().contains(_searchQuery.toLowerCase());
 
       return matchesFilter && matchesSearch;
     }).toList();
@@ -70,22 +87,6 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryGreen,
-        foregroundColor: Colors.black,
-        icon: const Icon(Icons.camera_alt_rounded),
-        label: const Text(
-          'Verify Crop AI',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const ProduceVerificationScreen(),
-            ),
-          );
-        },
-      ),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -108,18 +109,22 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
                       letterSpacing: -0.3,
                     ),
                   ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xFF0F2618),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.tune_rounded,
-                        color: AppColors.primaryGreen,
-                        size: 20,
+                  InkWell(
+                    onTap: () => _loadBatches(),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFF0F2618),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.refresh_rounded,
+                          color: AppColors.primaryGreen,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ),
@@ -129,7 +134,7 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
 
             const SizedBox(height: 18),
 
-            // Search Bar matching Image 5
+            // Search Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Container(
@@ -148,10 +153,17 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
                   cursorColor: AppColors.primaryGreen,
                   decoration: const InputDecoration(
                     hintText: 'Search batch ID or crop type...',
-                    hintStyle: TextStyle(color: Color(0xFF6F7772), fontSize: 13.5),
-                    prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF6F7772), size: 20),
+                    hintStyle: TextStyle(
+                      color: Color(0xFF6F7772),
+                      fontSize: 13.5,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: Color(0xFF6F7772),
+                      size: 20,
+                    ),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 14),
+                    contentPadding: EdgeInsets.symmetric(vertical: 13),
                   ),
                 ),
               ),
@@ -159,39 +171,129 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
 
             const SizedBox(height: 16),
 
-            // Filter Pills matching Image 5: [ All ] [ Verified ] [ Pending ] [ Flagged ]
+            // Filter Pills Row
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              physics: const BouncingScrollPhysics(),
               child: Row(
                 children: [
                   _buildFilterPill('All'),
                   const SizedBox(width: 8),
-                  _buildFilterPill('Verified'),
+                  _buildFilterPill('VERIFIED'),
                   const SizedBox(width: 8),
-                  _buildFilterPill('Pending'),
+                  _buildFilterPill('PENDING'),
                   const SizedBox(width: 8),
-                  _buildFilterPill('Flagged'),
+                  _buildFilterPill('REJECTED'),
                 ],
               ),
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
 
-            // List of Batch Cards
+            // Batches List
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
-                itemCount: _filteredBatches.length,
-                itemBuilder: (context, index) {
-                  final batch = _filteredBatches[index];
-                  return _buildBatchCard(batch);
-                },
-              ),
+              child: _isLoading && _batches.isEmpty
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryGreen,
+                      ),
+                    )
+                  : RefreshIndicator(
+                      color: AppColors.primaryGreen,
+                      backgroundColor: const Color(0xFF161917),
+                      onRefresh: () => _loadBatches(showLoading: false),
+                      child: _buildBatchesContent(),
+                    ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBatchesContent() {
+    if (_errorMessage != null && _batches.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 60),
+          Center(
+            child: Column(
+              children: [
+                const Icon(Icons.cloud_off_rounded, color: AppColors.textMuted, size: 48),
+                const SizedBox(height: 12),
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _loadBatches,
+                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                  label: const Text('Retry'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryGreen,
+                    side: const BorderSide(color: AppColors.primaryGreen),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    final filtered = _filteredBatches;
+
+    if (filtered.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 80),
+          Center(
+            child: Column(
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF161917),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF262C28)),
+                  ),
+                  child: const Icon(Icons.inventory_2_outlined, color: AppColors.textMuted, size: 28),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'No Produce Batches Found',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Register produce or verify a harvest batch to view history.',
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+      itemCount: filtered.length,
+      itemBuilder: (context, index) {
+        return _buildBatchCard(filtered[index]);
+      },
     );
   }
 
@@ -205,7 +307,9 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
           color: isSelected ? AppColors.primaryGreen : const Color(0xFF161917),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.primaryGreen : const Color(0xFF262C28),
+            color: isSelected
+                ? AppColors.primaryGreen
+                : const Color(0xFF262C28),
             width: 1.0,
           ),
         ),
@@ -221,8 +325,8 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
     );
   }
 
-  Widget _buildBatchCard(Map<String, dynamic> batch) {
-    final status = batch['status'] as String;
+  Widget _buildBatchCard(ProduceBatch batch) {
+    final status = batch.status.toUpperCase();
     Color statusColor;
     switch (status) {
       case 'VERIFIED':
@@ -244,23 +348,20 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF121513),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF1D2420),
-          width: 1.0,
-        ),
+        border: Border.all(color: const Color(0xFF1D2420), width: 1.0),
       ),
       child: Row(
         children: [
-          // Crop Thumbnail with smooth illustration
+          // Crop Thumbnail
           Container(
             width: 60,
             height: 60,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: _getThumbnailBg(batch['type']),
+              color: _getThumbnailBg(batch.type ?? batch.category.toLowerCase()),
             ),
             child: Center(
-              child: _getThumbnailIcon(batch['type']),
+              child: _getThumbnailIcon(batch.type ?? batch.category.toLowerCase()),
             ),
           ),
           const SizedBox(width: 14),
@@ -271,7 +372,7 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  batch['title'],
+                  batch.title,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14.5,
@@ -279,13 +380,28 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  batch['batchId'],
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      batch.batchId,
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    if (batch.quantity.isNotEmpty) ...[
+                      const Text(' • ', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                      Text(
+                        batch.quantity,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 5),
                 Row(
@@ -297,7 +413,7 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      batch['date'],
+                      batch.date,
                       style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 11,
@@ -336,28 +452,32 @@ class _ProduceHistoryScreenState extends State<ProduceHistoryScreen> {
   }
 
   Color _getThumbnailBg(String? type) {
-    switch (type) {
-      case 'coffee':
-        return const Color(0xFFD6A97A);
-      case 'honey':
-        return const Color(0xFFF9E8B2);
-      case 'spinach':
-        return const Color(0xFF3F614E);
-      default:
-        return const Color(0xFF222B25);
+    final lower = (type ?? '').toLowerCase();
+    if (lower.contains('coffee')) {
+      return const Color(0xFFD6A97A);
+    } else if (lower.contains('honey')) {
+      return const Color(0xFFF9E8B2);
+    } else if (lower.contains('spinach')) {
+      return const Color(0xFF3F614E);
+    } else if (lower.contains('fruit') || lower.contains('mango') || lower.contains('apple') || lower.contains('guava')) {
+      return const Color(0xFF5D4037);
+    } else {
+      return const Color(0xFF222B25);
     }
   }
 
   Widget _getThumbnailIcon(String? type) {
-    switch (type) {
-      case 'coffee':
-        return const Icon(Icons.coffee_rounded, color: Color(0xFF4A2C11), size: 28);
-      case 'honey':
-        return const Icon(Icons.hive_rounded, color: Color(0xFF946200), size: 28);
-      case 'spinach':
-        return const Icon(Icons.eco_rounded, color: Color(0xFFD4EBD6), size: 28);
-      default:
-        return const Icon(Icons.spa_rounded, color: Colors.white, size: 28);
+    final lower = (type ?? '').toLowerCase();
+    if (lower.contains('coffee')) {
+      return const Icon(Icons.coffee_rounded, color: Color(0xFF4A2C11), size: 28);
+    } else if (lower.contains('honey')) {
+      return const Icon(Icons.hive_rounded, color: Color(0xFF946200), size: 28);
+    } else if (lower.contains('spinach')) {
+      return const Icon(Icons.eco_rounded, color: Color(0xFFD4EBD6), size: 28);
+    } else if (lower.contains('fruit') || lower.contains('mango') || lower.contains('apple') || lower.contains('guava')) {
+      return const Icon(Icons.apple_rounded, color: Color(0xFFFFCC80), size: 28);
+    } else {
+      return const Icon(Icons.spa_rounded, color: Colors.white, size: 28);
     }
   }
 }

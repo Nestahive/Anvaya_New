@@ -40,6 +40,10 @@ class NormalizationService:
         if raw_status not in _VALID_STATUSES:
             raise ValueError(f"Unknown status '{raw_status}' from provider")
 
+        # Message if present
+        raw_message = raw_data.get("message")
+        message = str(raw_message).strip() if raw_message else None
+
         # 2. Non-verified states
         if raw_status in ("REJECTED", "RETAKE_REQUIRED"):
             return NormalizedInferenceResult(
@@ -48,6 +52,7 @@ class NormalizationService:
                 condition=None,
                 confidence=None,
                 visible_issues=[],
+                message=message,
             )
 
         # 3. VERIFIED — every field must be present and valid
@@ -97,4 +102,5 @@ class NormalizationService:
             condition=condition,
             confidence=confidence,
             visible_issues=clean_issues,
+            message=message,
         )

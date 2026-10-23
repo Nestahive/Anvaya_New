@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 
 /// Primary action button matching reference UI: solid neon green pill with black text.
@@ -35,7 +36,9 @@ class AppPrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryGreen,
           foregroundColor: Colors.black,
-          disabledBackgroundColor: AppColors.primaryGreen.withValues(alpha: 0.5),
+          disabledBackgroundColor: AppColors.primaryGreen.withValues(
+            alpha: 0.5,
+          ),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/anvaya_logo.dart';
+import 'farm_details_screen.dart';
 import 'login_screen.dart';
+import 'support_screen.dart';
 
 /// Screen 4: Farmer Profile & Account Settings matching reference design.
 class FarmerProfileScreen extends StatelessWidget {
@@ -30,10 +31,11 @@ class FarmerProfileScreen extends StatelessWidget {
         physics: const ClampingScrollPhysics(),
         child: Column(
           children: [
-            // Top Hero Banner with botanical foliage background, curved green arch and floating avatar
+            // Top Hero Banner with clear sharp botanical foliage, curved green arch, and floating avatar
             _buildHeroHeader(context),
 
-            const SizedBox(height: 20),
+            // Spacing to clear the floating avatar and badge, preventing any name overlap
+            const SizedBox(height: 76),
 
             // Farmer Name & ID
             const Text(
@@ -47,16 +49,16 @@ class FarmerProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             const Text(
-              'ID: AEGIS-7729-X',
+              'IDANVAYA-7729-X',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 14,
+                fontSize: 13.5,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.6,
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
 
             // Global Trust Score Section
             Padding(
@@ -130,9 +132,9 @@ class FarmerProfileScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
 
-            // Three Metric Cards in a row: 14 TOTAL BATCHES, 96% VERIFIED RATIO, 2.4k EARNING
+            // Three Metric Cards: 14 TOTAL BATCHES, 96% VERIFIED RATIO, 2.4k EARNING
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Row(
@@ -146,7 +148,7 @@ class FarmerProfileScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 26),
 
             // Account Settings Section
             Padding(
@@ -191,6 +193,13 @@ class FarmerProfileScreen extends StatelessWidget {
                           icon: Icons.agriculture_rounded,
                           title: 'Farm Details',
                           subtitle: 'Green Valley Estate, Kenya',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const FarmDetailsScreen(),
+                              ),
+                            );
+                          },
                         ),
                         const Divider(
                           color: Color(0xFF19201B),
@@ -201,6 +210,13 @@ class FarmerProfileScreen extends StatelessWidget {
                           icon: Icons.help_outline_rounded,
                           title: 'Support',
                           subtitle: 'Help Center & 24/7 Agent',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const SupportScreen(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -209,9 +225,9 @@ class FarmerProfileScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 26),
 
-            // Logout Action matching Image 4
+            // Logout Action matching design
             TextButton(
               onPressed: () => _handleLogout(context),
               child: const Row(
@@ -235,7 +251,7 @@ class FarmerProfileScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 36),
+            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -243,84 +259,26 @@ class FarmerProfileScreen extends StatelessWidget {
   }
 
   Widget _buildHeroHeader(BuildContext context) {
-    const double headerHeight = 220;
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.bottomCenter,
       children: [
-        // Lush green botanical background container with curved bottom clipping
-        ClipPath(
-          clipper: _HeaderCurveClipper(),
-          child: Container(
-            height: headerHeight,
-            width: double.infinity,
-            decoration: const BoxDecoration(color: Color(0xFF0A180E)),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  'assets/images/foliage_header.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0xFF0F3820),
-                          Color(0xFF092213),
-                          Color(0xFF05140B),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Subtle gradient overlay for depth
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.15),
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.35),
-                      ],
-                    ),
-                  ),
-                ),
-                // Top-left Anvaya Logo
-                Positioned(
-                  top: MediaQuery.of(context).padding.top + 8,
-                  left: 20,
-                  child: const AnvayaLogoMark(
-                    size: 34,
-                    color: Color(0xFFE2E8F0),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // Glowing neon green arch curve border along the bottom edge
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          height: headerHeight,
-          child: CustomPaint(painter: _HeaderCurveBorderPainter()),
+        // Sharp botanical foliage header with natural curved bottom edge and single Anvaya logo
+        Image.asset(
+          'assets/images/foliage_header.png',
+          width: double.infinity,
+          fit: BoxFit.fitWidth,
         ),
 
         // Floating Farmer Avatar with green border & VERIFIED FARMER pill
         Positioned(
-          bottom: -50,
+          bottom: -46,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 116,
-                height: 116,
+                width: 114,
+                height: 114,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.primaryGreen, width: 2.2),
@@ -353,39 +311,42 @@ class FarmerProfileScreen extends StatelessWidget {
               const SizedBox(height: 6),
 
               // VERIFIED FARMER Badge
-              // Container(
-              //   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              //   decoration: BoxDecoration(
-              //     color: AppColors.primaryGreen,
-              //     borderRadius: BorderRadius.circular(16),
-              //     boxShadow: [
-              //       BoxShadow(
-              //         color: AppColors.primaryGreen.withValues(alpha: 0.55),
-              //         blurRadius: 12,
-              //       ),
-              //     ],
-              //   ),
-              //   child: const Row(
-              //     mainAxisSize: MainAxisSize.min,
-              //     children: [
-              //       Icon(
-              //         Icons.check_circle_rounded,
-              //         color: Colors.black,
-              //         size: 13,
-              //       ),
-              //       SizedBox(width: 4),
-              //       Text(
-              //         'VERIFIED FARMER',
-              //         style: TextStyle(
-              //           color: Colors.black,
-              //           fontSize: 9.5,
-              //           fontWeight: FontWeight.w900,
-              //           letterSpacing: 0.5,
-              //         ),
-              //       ),
-              //     ],
-              //   ),
-              // ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.55),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.black,
+                      size: 13,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'VERIFIED FARMER',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -436,104 +397,59 @@ class FarmerProfileScreen extends StatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
+    VoidCallback? onTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF141C16),
-            ),
-            child: Icon(icon, color: AppColors.primaryGreen, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w700,
-                  ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFF141C16),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12.5,
-                  ),
+                child: Icon(icon, color: AppColors.primaryGreen, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF4C5850),
+                size: 20,
+              ),
+            ],
           ),
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: Color(0xFF4C5850),
-            size: 20,
-          ),
-        ],
+        ),
       ),
     );
   }
-}
-
-class _HeaderCurveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, size.height - 45);
-    path.quadraticBezierTo(
-      size.width / 2,
-      size.height + 25,
-      size.width,
-      size.height - 45,
-    );
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
-class _HeaderCurveBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final strokePaint = Paint()
-      ..color = AppColors.primaryGreen
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..isAntiAlias = true;
-
-    final glowPaint = Paint()
-      ..color = AppColors.primaryGreen.withValues(alpha: 0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 5.0
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5)
-      ..isAntiAlias = true;
-
-    final path = Path();
-    path.moveTo(0, size.height - 45);
-    path.quadraticBezierTo(
-      size.width / 2,
-      size.height + 25,
-      size.width,
-      size.height - 45,
-    );
-
-    canvas.drawPath(path, glowPaint);
-    canvas.drawPath(path, strokePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

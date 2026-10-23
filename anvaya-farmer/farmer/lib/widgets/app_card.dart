@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 
 /// Reusable dark rounded card with subtle green border and optional glow.
@@ -51,19 +52,12 @@ class AppCard extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: onTap,
-            child: Padding(
-              padding: padding,
-              child: child,
-            ),
+            child: Padding(padding: padding, child: child),
           ),
         ),
       );
     }
 
-    return Container(
-      decoration: decoration,
-      padding: padding,
-      child: child,
-    );
+    return Container(decoration: decoration, padding: padding, child: child);
   }
 }

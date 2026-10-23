@@ -12,9 +12,7 @@ class GoogleLogo extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _GoogleLogoPainter(),
-      ),
+      child: CustomPaint(painter: _GoogleLogoPainter()),
     );
   }
 }
@@ -106,7 +104,7 @@ class _GoogleLogoPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Official geometric MetaMask Fox logo matching brand specs.
+/// Official MetaMask Fox logo using supplied brand asset.
 class MetaMaskLogo extends StatelessWidget {
   final double size;
 
@@ -114,75 +112,12 @@ class MetaMaskLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Image.asset(
+      'assets/images/metamask_logo.png',
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _MetaMaskLogoPainter(),
-      ),
+      fit: BoxFit.contain,
     );
   }
 }
 
-class _MetaMaskLogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final scale = size.width / 32.0;
-    canvas.save();
-    canvas.scale(scale, scale);
-
-    void drawPoly(List<Offset> points, Color color) {
-      if (points.isEmpty) return;
-      final path = Path()..moveTo(points[0].dx, points[0].dy);
-      for (int i = 1; i < points.length; i++) {
-        path.lineTo(points[i].dx, points[i].dy);
-      }
-      path.close();
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = color
-          ..style = PaintingStyle.fill
-          ..isAntiAlias = true,
-      );
-    }
-
-    // Outer ears / head geometry
-    drawPoly([const Offset(2.0, 3.0), const Offset(9.0, 10.0), const Offset(6.0, 18.0)], const Color(0xFFE2761B));
-    drawPoly([const Offset(30.0, 3.0), const Offset(26.0, 18.0), const Offset(23.0, 10.0)], const Color(0xFFE2761B));
-
-    // Ear inside
-    drawPoly([const Offset(2.0, 3.0), const Offset(6.0, 18.0), const Offset(9.0, 14.0)], const Color(0xFF763D16));
-    drawPoly([const Offset(30.0, 3.0), const Offset(23.0, 14.0), const Offset(26.0, 18.0)], const Color(0xFF763D16));
-
-    // Central forehead
-    drawPoly([const Offset(9.0, 10.0), const Offset(16.0, 6.0), const Offset(23.0, 10.0), const Offset(16.0, 15.0)], const Color(0xFFF6851B));
-
-    // Side cheeks
-    drawPoly([const Offset(6.0, 18.0), const Offset(10.0, 23.0), const Offset(12.0, 18.0), const Offset(9.0, 10.0)], const Color(0xFFE2761B));
-    drawPoly([const Offset(26.0, 18.0), const Offset(23.0, 10.0), const Offset(20.0, 18.0), const Offset(22.0, 23.0)], const Color(0xFFE2761B));
-
-    // Center bridge
-    drawPoly([const Offset(12.0, 18.0), const Offset(16.0, 15.0), const Offset(20.0, 18.0), const Offset(16.0, 23.0)], const Color(0xFFE2761B));
-
-    // Cheeks lower
-    drawPoly([const Offset(6.0, 18.0), const Offset(10.0, 23.0), const Offset(7.0, 27.0)], const Color(0xFFCD6116));
-    drawPoly([const Offset(26.0, 18.0), const Offset(25.0, 27.0), const Offset(22.0, 23.0)], const Color(0xFFCD6116));
-
-    // Muzzle / white patches
-    drawPoly([const Offset(10.0, 23.0), const Offset(16.0, 23.0), const Offset(16.0, 28.0), const Offset(7.0, 27.0)], const Color(0xFFF6851B));
-    drawPoly([const Offset(22.0, 23.0), const Offset(25.0, 27.0), const Offset(16.0, 28.0), const Offset(16.0, 23.0)], const Color(0xFFF6851B));
-
-    // Eyes
-    drawPoly([const Offset(10.0, 18.0), const Offset(13.0, 17.0), const Offset(12.0, 19.5)], const Color(0xFF24292E));
-    drawPoly([const Offset(22.0, 18.0), const Offset(20.0, 19.5), const Offset(19.0, 17.0)], const Color(0xFF24292E));
-
-    // Snout tip / nose
-    drawPoly([const Offset(14.5, 27.0), const Offset(17.5, 27.0), const Offset(16.0, 29.5)], const Color(0xFF161616));
-
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

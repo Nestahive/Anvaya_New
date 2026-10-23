@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     
     # Internal Vision Provider Config (Never exposed to clients)
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-3.6-flash"
-    INFERENCE_TIMEOUT_MS: int = 25000
+    GEMINI_MODEL: str = "gemini-3.5-flash-lite"
+    INFERENCE_TIMEOUT_MS: int = 15000
     
     # Constraints
     MAX_IMAGE_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB

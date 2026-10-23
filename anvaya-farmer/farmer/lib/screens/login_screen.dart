@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/anvaya_logo.dart';
@@ -41,9 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       if (credential != null) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const FarmerHomeScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const FarmerHomeScreen()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -53,7 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text(AuthService.parseAuthException(e)),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     } catch (e) {
@@ -63,7 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text('Google Sign-In failed: $e'),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     } finally {
@@ -78,7 +81,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text.trim();
 
     setState(() {
-      _identifierError = identifier.isEmpty ? 'Please enter your Email or ID' : null;
+      _identifierError = identifier.isEmpty
+          ? 'Please enter your Email or ID'
+          : null;
       _passwordError = password.isEmpty ? 'Please enter your password' : null;
     });
 
@@ -92,9 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (!mounted) return;
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const FarmerHomeScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const FarmerHomeScreen()),
         );
       } on FirebaseAuthException catch (e) {
         if (!mounted) return;
@@ -103,16 +106,16 @@ class _LoginScreenState extends State<LoginScreen> {
             content: Text(AuthService.parseAuthException(e)),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       } catch (e) {
         if (!mounted) return;
         // Fallback for mock/test if Firebase project credentials are not finalized
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const FarmerHomeScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const FarmerHomeScreen()),
         );
       } finally {
         if (mounted) {
@@ -123,11 +126,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToSignUp() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const SignUpScreen(),
-      ),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => const SignUpScreen()));
   }
 
   @override
@@ -179,7 +179,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16.0,
+              ),
               physics: const ClampingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -187,11 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
 
                   // Centered Anvaya Logo Mark
-                  const Center(
-                    child: AnvayaLogoMark(
-                      size: 42,
-                    ),
-                  ),
+                  const Center(child: AnvayaLogoMark(size: 42)),
 
                   const SizedBox(height: 18),
 
@@ -224,10 +223,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('MetaMask Web3 wallet connection coming soon'),
+                              content: const Text(
+                                'MetaMask Web3 wallet connection coming soon',
+                              ),
                               backgroundColor: const Color(0xFF1E201F),
                               behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                           );
                         },

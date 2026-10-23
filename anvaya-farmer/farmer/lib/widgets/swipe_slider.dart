@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../theme/app_theme.dart';
 
 /// Real swipe-to-confirm slider widget.
@@ -54,28 +55,16 @@ class _SwipeToConfirmSliderState extends State<SwipeToConfirmSlider>
   }
 
   void _springBack() {
-    _springAnimation = Tween<double>(
-      begin: _dragOffset,
-      end: 0.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _springController,
-        curve: Curves.easeOutBack,
-      ),
+    _springAnimation = Tween<double>(begin: _dragOffset, end: 0.0).animate(
+      CurvedAnimation(parent: _springController, curve: Curves.easeOutBack),
     );
     _springController.forward(from: 0.0);
   }
 
   void _completeDrag(double maxDrag) {
     setState(() => _isCompleted = true);
-    _springAnimation = Tween<double>(
-      begin: _dragOffset,
-      end: maxDrag,
-    ).animate(
-      CurvedAnimation(
-        parent: _springController,
-        curve: Curves.easeOutCubic,
-      ),
+    _springAnimation = Tween<double>(begin: _dragOffset, end: maxDrag).animate(
+      CurvedAnimation(parent: _springController, curve: Curves.easeOutCubic),
     );
     _springController.forward(from: 0.0).then((_) {
       HapticFeedback.lightImpact();
@@ -98,7 +87,9 @@ class _SwipeToConfirmSliderState extends State<SwipeToConfirmSlider>
       builder: (context, constraints) {
         final totalWidth = constraints.maxWidth;
         final maxDrag = totalWidth - _knobSize - (_padding * 2);
-        final progress = maxDrag > 0 ? (_dragOffset / maxDrag).clamp(0.0, 1.0) : 0.0;
+        final progress = maxDrag > 0
+            ? (_dragOffset / maxDrag).clamp(0.0, 1.0)
+            : 0.0;
         final contentOpacity = (1.0 - (progress * 1.35)).clamp(0.0, 1.0);
 
         return Container(
@@ -107,10 +98,7 @@ class _SwipeToConfirmSliderState extends State<SwipeToConfirmSlider>
           decoration: BoxDecoration(
             color: const Color(0xFF141715),
             borderRadius: BorderRadius.circular(40),
-            border: Border.all(
-              color: const Color(0xFF222724),
-              width: 1.0,
-            ),
+            border: Border.all(color: const Color(0xFF222724), width: 1.0),
           ),
           child: Stack(
             alignment: Alignment.centerLeft,
@@ -140,9 +128,21 @@ class _SwipeToConfirmSliderState extends State<SwipeToConfirmSlider>
                       const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.chevron_right_rounded, color: Color(0x5594A3B8), size: 18),
-                          Icon(Icons.chevron_right_rounded, color: Color(0x9994A3B8), size: 18),
-                          Icon(Icons.chevron_right_rounded, color: Color(0xFFFFFFFF), size: 18),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: Color(0x5594A3B8),
+                            size: 18,
+                          ),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: Color(0x9994A3B8),
+                            size: 18,
+                          ),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: Color(0xFFFFFFFF),
+                            size: 18,
+                          ),
                         ],
                       ),
                     ],
@@ -161,7 +161,10 @@ class _SwipeToConfirmSliderState extends State<SwipeToConfirmSlider>
                   onHorizontalDragUpdate: (details) {
                     if (_isCompleted) return;
                     setState(() {
-                      _dragOffset = (_dragOffset + details.delta.dx).clamp(0.0, maxDrag);
+                      _dragOffset = (_dragOffset + details.delta.dx).clamp(
+                        0.0,
+                        maxDrag,
+                      );
                     });
                   },
                   onHorizontalDragEnd: (_) {

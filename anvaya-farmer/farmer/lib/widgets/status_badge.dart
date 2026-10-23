@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 
 /// Status badge for batch states (VERIFIED, PENDING, FLAGGED).
 class StatusBadge extends StatelessWidget {
   final String status;
 
-  const StatusBadge({
-    super.key,
-    required this.status,
-  });
+  const StatusBadge({super.key, required this.status});
 
   Color _getStatusColor() {
     switch (status.toUpperCase()) {
@@ -32,10 +30,7 @@ class StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withValues(alpha: 0.35),
-          width: 1.0,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.35), width: 1.0),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -43,10 +38,7 @@ class StatusBadge extends StatelessWidget {
           Container(
             width: 5,
             height: 5,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color,
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
           ),
           const SizedBox(width: 6),
           Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 
 /// Reusable dark styled text field matching reference UI with smooth gray surface.
@@ -63,10 +64,7 @@ class _AppTextFieldState extends State<AppTextField> {
           obscureText: widget.isPassword ? _isObscured : widget.obscureText,
           keyboardType: widget.keyboardType,
           onChanged: widget.onChanged,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 14.5,
-          ),
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 14.5),
           cursorColor: AppColors.primaryGreen,
           decoration: InputDecoration(
             hintText: widget.hintText,
@@ -76,16 +74,18 @@ class _AppTextFieldState extends State<AppTextField> {
             ),
             filled: true,
             fillColor: AppColors.inputBackground,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            errorText: widget.errorText,
-            errorStyle: const TextStyle(
-              color: AppColors.error,
-              fontSize: 12,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
             ),
+            errorText: widget.errorText,
+            errorStyle: const TextStyle(color: AppColors.error, fontSize: 12),
             suffixIcon: widget.isPassword
                 ? IconButton(
                     icon: Icon(
-                      _isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      _isObscured
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       color: AppColors.textMuted,
                       size: 20,
                     ),
@@ -98,15 +98,24 @@ class _AppTextFieldState extends State<AppTextField> {
                 : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.0),
+              borderSide: const BorderSide(
+                color: AppColors.inputBorder,
+                width: 1.0,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.0),
+              borderSide: const BorderSide(
+                color: AppColors.inputBorder,
+                width: 1.0,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primaryGreen, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.primaryGreen,
+                width: 1.5,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -124,10 +133,7 @@ class _AppTextFieldState extends State<AppTextField> {
           const SizedBox(height: 5),
           Text(
             widget.helperText!,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
           ),
         ],
       ],

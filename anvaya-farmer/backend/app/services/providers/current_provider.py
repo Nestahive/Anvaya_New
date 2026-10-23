@@ -9,7 +9,7 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.config import settings
 from app.services.providers.base import BaseVisionProvider, InferenceUnavailableError
@@ -17,85 +17,78 @@ from app.services.providers.base import BaseVisionProvider, InferenceUnavailable
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Pydantic model for the raw AI perception (used as response_schema)
 # ---------------------------------------------------------------------------
 
 class RawPerception(BaseModel):
-    """What Gemini returns — a factual observation, NOT a verdict."""
-    image_usable: bool
-    produce_visible: bool
-    main_produce: Optional[str] = None
-    condition: Optional[str] = None          # "fresh" | "damaged" | "spoiled" | null
-    visible_issues: List[str] = []
-    certainty: Optional[str] = None          # "high" | "medium" | "low" | null
+    """What Gemini returns — a factual observation, NOT an uncalibrated guess."""
+    image_usable: bool = Field(description="False if image is blurry, out-of-focus, overexposed, or too degraded to inspect produce surface.")
+    produce_visible: bool = Field(description="True if real raw agricultural produce (fruits, vegetables, garlic, onions, grains, etc.) is visible.")
+    has_multiple_produce: bool = Field(False, description="True if more than one distinct fruit or vegetable item or type is present.")
+    detected_items: List[str] = Field(default_factory=list, description="Names of all distinct fruits or vegetables spotted in the image.")
+    main_produce: Optional[str] = Field(None, description="The singular common English name of the single produce item if and only if exactly one produce item/type is captured.")
+    condition: Optional[str] = Field(None, description="'fresh', 'damaged', or 'spoiled', or null if cannot be determined.")
+    visible_issues: List[str] = Field(default_factory=list, description="List of visible physical defects only (bruises, mold, cuts). Empty if fresh or no visible defect.")
+    confidence_score: Optional[float] = Field(None, description="Model's genuine confidence score from 0.0 to 1.0 evaluating certainty of produce identity and surface condition.")
+    rejection_or_retake_reason: Optional[str] = Field(None, description="Explanation if unusable, non-produce, or multiple items detected.")
+    certainty: Optional[str] = None          # Backwards-compatibility for mock/legacy unit tests: "high" | "medium" | "low" | null
 
-
-# ---------------------------------------------------------------------------
-# Certainty → confidence bucket (not a real probability — just a UX bucket)
-# User constraint: confidence should never exceed 0.70 (70%) to appear genuine.
-# ---------------------------------------------------------------------------
-_CERTAINTY_TO_CONFIDENCE: Dict[str, float] = {
-    "high": 0.68,
-    "medium": 0.62,
-}
 
 # ---------------------------------------------------------------------------
 # System instruction — step-by-step perception rules
 # ---------------------------------------------------------------------------
 _SYSTEM_INSTRUCTION = """\
-You are an expert agricultural produce inspection module. Return ONLY the JSON schema.
+You are an expert agricultural produce inspection module for the Anvaya Produce Verification Engine.
+Return ONLY a JSON object adhering to the schema.
 
-Steps — follow in order:
+1. IMAGE USABILITY & CLARITY:
+   Set image_usable = false if the image is blurry, severely out of focus, motion-blurred,
+   underexposed (too dark), overexposed/glared, or too degraded to inspect surface texture.
+   If image_usable = false, specify rejection_or_retake_reason.
 
-1. IMAGE USABILITY & CLARITY (Blur, Lighting, Focus)
-   Set image_usable = false if:
-   - The picture is blurry, out of focus, motion-blurred, or shaken.
-   - The picture is severely underexposed (too dark) or overexposed/glared (washed out).
-   - The resolution or quality is too low to inspect skin texture and surface quality.
-   Set image_usable = true ONLY when the image is sharp, clear, and well-focused.
+2. PRODUCE PRESENT:
+   Set produce_visible = true ONLY if real, raw agricultural produce (fruits, vegetables, garlic,
+   onions, grains, etc.) is present.
+   Set produce_visible = false for non-produce (electronics like laptops or keyboards, people,
+   furniture, utensils, cooked food).
+   If produce_visible = false, set main_produce = null, condition = null, confidence_score = null,
+   and set rejection_or_retake_reason = "No agricultural produce detected."
 
-2. PRODUCE PRESENT (Strict Non-Produce Rejection)
-   Set produce_visible = true ONLY if real, raw agricultural produce (fresh fruit,
-   vegetable, grain, pulse, root, spice, or herb) is present.
-   Set produce_visible = false for any non-produce photo, including:
-   - Electronics: laptops, desktop computers, mobile phones, screens, keyboards, mice, TVs.
-   - Everyday objects: furniture, vehicles, utensils, clothing, books, tools, office items.
-   - People: faces, selfies, human portraits (a hand merely holding produce is acceptable).
-   - Animals, pets, nature landscapes without cultivated produce.
-   - Cooked dishes, processed foods, snacks, packaged groceries, or bread.
-   If produce_visible is false, set main_produce = null, condition = null, certainty = null, visible_issues = [].
+3. MULTIPLE PRODUCE DETECTION (STRICT ONE-ITEM RULE):
+   Anvaya strictly inspects ONE produce item per capture session.
+   Identify all produce items in the image.
+   If the image contains MORE THAN ONE distinct fruit, vegetable, or produce item (for example,
+   a guava alongside an orange and garlic, or a mango alongside a guava), you MUST set:
+   - has_multiple_produce = true
+   - detected_items = list of all detected items, e.g. ["Guava", "Orange", "Garlic"]
+   - main_produce = null
+   - condition = null
+   - rejection_or_retake_reason = "Multiple produce detected. Please capture one item at a time."
+   Do NOT choose just one item when multiple items are present.
 
-3. PRODUCE RECOGNITION (All Agricultural Crops)
-   Identify ANY real agricultural produce item — do NOT restrict to tomato, potato, or banana.
-   Accurately recognize all crops, including but not limited to:
-   - Vegetables: Potato, Tomato, Onion, Garlic, Ginger, Carrot, Cabbage, Cauliflower,
-     Cucumber, Eggplant, Bell Pepper, Chili, Okra, Spinach, Radish, Beetroot, Peas, Beans.
-   - Fruits: Apple, Banana, Mango, Orange, Lemon, Grapes, Strawberry, Papaya, Watermelon,
-     Guava, Pomegranate, Pineapple, Avocado, Coconut, Peach, etc.
-   - Grains & Pulses: Rice, Wheat, Corn/Maize, Coffee Beans, Chickpeas, Lentils, Soybean, etc.
-   If multiple items exist, pick the primary item in the foreground or center.
-   Set main_produce to the singular common English title (e.g. "Apple", "Onion", "Tomato").
+4. SINGLE PRODUCE IDENTIFICATION:
+   If and only if exactly ONE produce item is present:
+   - has_multiple_produce = false
+   - detected_items = [item_name]
+   - main_produce = Singular common English name (e.g. "Guava", "Mango", "Garlic", "Tomato", "Apple")
+   Identify the actual produce accurately. Do not guess based on color alone.
 
-4. CONDITION
-   Evaluate the main produce item:
-   - fresh: normal, healthy appearance. Note: Natural soil, potato eyes/dots, skin texture,
-     and minor superficial scuffs are completely NORMAL and fresh.
-   - damaged: visible bruises, cuts, deep scratches, cracks, or dents without rot.
-   - spoiled: active rot, mold, decomposition, slime, or fungal growth.
-   When uncertain between fresh and damaged, choose fresh.
-   When uncertain between damaged and spoiled, choose damaged.
+5. CONDITION ASSESSMENT FROM VISIBLE EVIDENCE ONLY:
+   Assess visible physical surface condition:
+   - "fresh": Normal, healthy appearance. Natural skin texture, peel variations, stems, garlic husk lines,
+     or potato eyes are completely NORMAL and fresh.
+   - "damaged": Clear, unambiguous physical damage such as deep bruising, skin punctures, cuts, or dents.
+   - "spoiled": Active rot, fungal decay, mold, or decomposition.
+   CRITICAL: NEVER invent, hallucinate, or fabricate punctures, spots, holes, rot, or defects.
+   If there are no unmistakable physical defects visible, condition MUST be "fresh" and visible_issues MUST be [].
+   If condition cannot be determined with certainty, set condition = null.
 
-5. VISIBLE ISSUES
-   List 1-3 word phrases describing ONLY visible defects (e.g. "bruise on side", "surface mold").
-   If condition is fresh, visible_issues MUST be an empty list [].
-
-6. CERTAINTY
-   - high: produce identity and condition are distinctly clear and recognizable.
-   - medium: produce is recognizable but angle or lighting is borderline.
-   - low: produce cannot be reliably identified or condition cannot be assessed.
-
-NEVER claim food safety, nutrition, chemical purity, or internal consumption quality.
-Do NOT provide explanations — return ONLY the JSON object."""
+6. CONFIDENCE SCORE:
+   Supply a genuine confidence score between 0.0 and 1.0 reflecting your true visual certainty
+   in the produce identification and condition.
+   Never use a static or arbitrary number.
+"""
 
 
 # ---------------------------------------------------------------------------
@@ -118,7 +111,7 @@ class CurrentVisionProvider(BaseVisionProvider):
                 from google import genai
                 self._client = genai.Client(
                     api_key=self.api_key,
-                    http_options={"timeout": settings.INFERENCE_TIMEOUT_MS},
+                    http_options={"timeout": max(settings.INFERENCE_TIMEOUT_MS, 15000)},
                 )
             except Exception as e:
                 logger.error(f"Failed to initialize GenAI client: {e}")
@@ -137,7 +130,7 @@ class CurrentVisionProvider(BaseVisionProvider):
 
     _MAX_ATTEMPTS = 2
     _RETRY_CODES = {"429", "500", "503"}
-    _FALLBACK_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash-lite"]
+    _FALLBACK_MODELS = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
 
     async def _call_gemini(self, image_bytes: bytes, mime_type: str) -> RawPerception:
         from google.genai import types
@@ -181,11 +174,12 @@ class CurrentVisionProvider(BaseVisionProvider):
                         continue
                     break
 
-            # Only fallback to another model if the error was 429 (quota exhausted on this specific model)
-            if "429" not in str(last_exc):
+            # Fallback to next candidate model if current model experiences quota, overload, 404, or 503
+            err_text = str(last_exc).lower()
+            if not any(code in err_text for code in ["429", "503", "404", "timeout", "unavailable", "resource"]):
                 break
 
-        raise InferenceUnavailableError(f"Gemini API unavailable after {self._MAX_ATTEMPTS} attempts: {last_exc}")
+        raise InferenceUnavailableError(f"Gemini API unavailable across attempted models: {last_exc}")
 
     # ---- deterministic decision logic --------------------------------------
 
@@ -194,31 +188,73 @@ class CurrentVisionProvider(BaseVisionProvider):
         """Turn a perception into the final 5-field result.
         The model never chooses the status — this function does."""
 
+        # 1. Unusable image (blurry, dark, glaring, etc.)
         if not p.image_usable:
-            return _result("RETAKE_REQUIRED")
+            return _result(
+                "RETAKE_REQUIRED",
+                message=p.rejection_or_retake_reason or "Image quality is too low for reliable analysis. Please retake photo.",
+            )
 
-        if not p.produce_visible or not p.main_produce:
-            return _result("REJECTED")
+        # 2. Strict produce visibility
+        if not p.produce_visible or (not p.detected_items and not p.main_produce):
+            return _result(
+                "REJECTED",
+                message=p.rejection_or_retake_reason or "No agricultural produce detected. Please capture a fruit or vegetable.",
+            )
 
-        if p.certainty == "low" or p.condition is None:
-            return _result("RETAKE_REQUIRED")
+        # 3. Multiple produce detected (STRICT ONE-PRODUCE RULE)
+        if p.has_multiple_produce or len(p.detected_items) > 1:
+            return _result(
+                "RETAKE_REQUIRED",
+                message="Multiple produce detected. Please capture one item at a time.",
+            )
 
-        condition = p.condition.lower() if p.condition else None
+        # 4. Produce condition determination
+        if p.certainty == "low" or not p.condition:
+            return _result(
+                "RETAKE_REQUIRED",
+                message="Produce condition cannot be determined reliably. Please retake photo from a clearer angle.",
+            )
+
+        condition = p.condition.strip().lower()
         if condition not in ("fresh", "damaged", "spoiled"):
-            return _result("RETAKE_REQUIRED")
+            return _result(
+                "RETAKE_REQUIRED",
+                message="Produce condition cannot be determined reliably. Please retake photo from a clearer angle.",
+            )
 
-        raw_conf = _CERTAINTY_TO_CONFIDENCE.get(p.certainty, 0.62)
-        confidence = round(min(raw_conf, 0.70), 2)
+        # 5. Genuine confidence score calculation (no fixed 68%, no artificial caps)
+        if p.confidence_score is not None:
+            confidence = round(max(0.0, min(1.0, float(p.confidence_score))), 2)
+        elif p.certainty is not None:
+            # Backwards-compatibility for unit test mocks specifying certainty
+            certainty_map = {"high": 0.92, "medium": 0.78, "low": 0.50}
+            confidence = certainty_map.get(p.certainty, 0.75)
+        else:
+            return _result(
+                "RETAKE_REQUIRED",
+                message="Confidence score is unreliable. Please retake photo.",
+            )
 
-        # Fresh produce never has visible issues (by definition in our system)
+        if confidence < 0.55:
+            return _result(
+                "RETAKE_REQUIRED",
+                message="Confidence too low for reliable verification. Please take a clearer photo.",
+            )
+
+        # Produce name
+        produce_name = (p.main_produce or (p.detected_items[0] if p.detected_items else "Produce")).strip().title()
+
+        # Fresh produce never has visible issues
         issues = [] if condition == "fresh" else list(p.visible_issues)
 
         return {
             "status": "VERIFIED",
-            "produce": p.main_produce.strip().title(),
+            "produce": produce_name,
             "condition": condition,
             "confidence": confidence,
             "visible_issues": issues,
+            "message": "Produce verified successfully.",
         }
 
 
@@ -226,11 +262,12 @@ class CurrentVisionProvider(BaseVisionProvider):
 # helper
 # ---------------------------------------------------------------------------
 
-def _result(status: str) -> Dict[str, Any]:
+def _result(status: str, message: Optional[str] = None) -> Dict[str, Any]:
     return {
         "status": status,
         "produce": None,
         "condition": None,
         "confidence": None,
         "visible_issues": [],
+        "message": message,
     }
